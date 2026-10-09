@@ -1,0 +1,28 @@
+# Workspace de Python del chasis. Cada paquete se publica por separado en Artifact Registry.
+[project]
+name = "fundamentum"
+version = "0.0.0"
+requires-python = ">=3.12,<3.13"
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["python/fundamentum_modelos", "python/fundamentum_adk"]
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.7"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts = "--import-mode=importlib"
+testpaths = ["python/fundamentum_modelos/tests", "python/fundamentum_adk/tests"]
+
+# Misma configuración que Vocatio y Domi.
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "DTZ", "ASYNC", "RUF"]
+ignore = ["E501", "RUF001", "RUF002", "RUF003"]  # acentos y comillas tipográficas del español son intencionales

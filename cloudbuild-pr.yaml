@@ -1,0 +1,14 @@
+# CI de pull requests. Corre sin credenciales de nube.
+steps:
+  - id: python
+    name: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    entrypoint: bash
+    args: ["-ceu", "uv sync --all-packages --frozen && uv run ruff check . && uv run ruff format --check . && uv run pytest -q"]
+    waitFor: ["-"]
+
+  - id: terraform
+    name: hashicorp/terraform:1.9
+    entrypoint: sh
+    dir: infra/modulos/medicion
+    args: ["-ceu", "terraform fmt -check && terraform init -backend=false -input=false && terraform validate"]
+    waitFor: ["-"]
