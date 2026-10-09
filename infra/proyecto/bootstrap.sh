@@ -29,6 +29,8 @@ fi
 gcloud billing projects link "$proyecto" --billing-account="$facturacion"
 
 gcloud services enable --project="$proyecto" \
+  cloudresourcemanager.googleapis.com \
+  serviceusage.googleapis.com \
   artifactregistry.googleapis.com \
   cloudbuild.googleapis.com \
   cloudbilling.googleapis.com \
