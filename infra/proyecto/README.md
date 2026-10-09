@@ -39,8 +39,14 @@ Mientras no exista el trigger, puedes publicar a mano:
 
 ```bash
 gcloud builds submit --project fundamentum-mx --config cloudbuild-publicar.yaml \
+  --service-account projects/fundamentum-mx/serviceAccounts/fundamentum-publicador@fundamentum-mx.iam.gserviceaccount.com \
   --substitutions TAG_NAME=v0.1.0 .
 ```
+
+`--service-account` es obligatorio. Los proyectos nuevos ya no traen la cuenta de servicio de Cloud
+Build por defecto, y sin ella el build falla con `NOT_FOUND ... ServiceAccountInfoDataType`. La
+primera vez, el bucket `fundamentum-mx_cloudbuild` aún no existe; después del primer intento, vuelve
+a aplicar Terraform para que el publicador pueda leerlo.
 
 Artifact Registry rechaza que se suba dos veces la misma versión, así que una versión publicada no
 cambia.

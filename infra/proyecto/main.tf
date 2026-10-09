@@ -52,6 +52,15 @@ resource "google_artifact_registry_repository_iam_member" "publicador" {
   member     = "serviceAccount:${google_service_account.publicador.email}"
 }
 
+# `gcloud builds submit` sube el código a este bucket (lo crea Cloud Build la primera vez). Los
+# proyectos nuevos ya no tienen cuenta de Cloud Build por defecto, así que el build corre como el
+# publicador y necesita leer el código que subió.
+resource "google_storage_bucket_iam_member" "publicador_fuente" {
+  bucket = "${var.project_id}_cloudbuild"
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${google_service_account.publicador.email}"
+}
+
 resource "google_project_iam_member" "publicador_logs" {
   project = var.project_id
   role    = "roles/logging.logWriter"
