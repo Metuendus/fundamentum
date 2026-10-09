@@ -1,0 +1,3 @@
+# bootstrap.sh escribe backend.hcl con el bucket real.
+bucket = "fundamentum-mx-tfstate"
+prefix = "fundamentum"

@@ -1,5 +1,33 @@
 # Adopción por app (fase A)
 
+## Instalar el chasis
+
+Los paquetes se publican en Artifact Registry, en el proyecto propio del chasis
+(`infra/proyecto`). Cada app declara el índice y fija la versión:
+
+```toml
+# pyproject.toml del paquete de la app que usa el chasis
+[project]
+dependencies = ["fundamentum-adk==0.1.0"]
+
+[[tool.uv.index]]
+name = "fundamentum"
+url = "https://us-central1-python.pkg.dev/fundamentum-mx/fundamentum-py/simple/"
+explicit = true
+
+[tool.uv.sources]
+fundamentum-adk = { index = "fundamentum" }
+fundamentum-modelos = { index = "fundamentum" }
+```
+
+Autenticación:
+- **En local:** `gcloud auth application-default login` y
+  `uv tool install keyring --with keyrings.google-artifactregistry-auth`; luego
+  `UV_KEYRING_PROVIDER=subprocess uv sync`.
+- **En Cloud Build:** la cuenta de Cloud Build de la app va en `lectores`. El paso de instalación
+  usa `UV_INDEX_FUNDAMENTUM_USERNAME=oauth2accesstoken` y
+  `UV_INDEX_FUNDAMENTUM_PASSWORD=$(gcloud auth print-access-token)`.
+
 ## Iterum (Agent Runtime, ADK 2.10)
 
 1. Agregar `fundamentum-adk` a `agents/pyproject.toml`, desde Artifact Registry y con versión fija.

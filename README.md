@@ -12,6 +12,7 @@ evaluaciones y el design system. Cada app conserva sus agentes, su dominio y su 
 | Registro tarea→modelo, precios, costo | `python/fundamentum_modelos` | 0.1.0 · fase A |
 | Plugin de medición, modelos ADK (Gemini y Claude) | `python/fundamentum_adk` | 0.1.0 · fase A |
 | Dataset, sink y vistas de medición | `infra/modulos/medicion` | fase A |
+| Proyecto propio: Artifact Registry y publicación | `infra/proyecto` | fase A |
 | Eventos, Despachador, Propuesta, Fuente | `python/fundamentum_eventos` | fase B |
 | Runner de evals con gates de costo y latencia | `python/fundamentum_evals` | fase D |
 | Tokens (base MiniMax + temas) y UI | `ts/` | fase E |
@@ -24,7 +25,7 @@ Plan completo y razones: [`docs/plan.md`](docs/plan.md). Contrato de medición:
 ```bash
 uv sync --all-packages
 uv run ruff check . && uv run ruff format --check . && uv run pytest -q
-cd infra/modulos/medicion && terraform fmt -check && terraform init -backend=false && terraform validate
+terraform fmt -check -recursive infra   # el validate de cada módulo corre en CI (cloudbuild-pr.yaml)
 ```
 
 ## Reglas

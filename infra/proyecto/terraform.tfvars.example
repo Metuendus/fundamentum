@@ -1,0 +1,5 @@
+# bootstrap.sh escribe terraform.tfvars con estos dos valores; lo demás tiene valor por defecto.
+project_id         = "fundamentum-mx"
+billing_account_id = "XXXXXX-XXXXXX-XXXXXX"
+# lectores      = ["user:tu-correo@gmail.com"]
+# crear_trigger = true

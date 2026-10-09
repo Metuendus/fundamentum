@@ -1,0 +1,46 @@
+# Publica los paquetes de Python del chasis en Artifact Registry al etiquetar vX.Y.Z.
+# La etiqueta debe coincidir con la versión de cada paquete; si no, no se publica nada.
+steps:
+  - id: version
+    name: python:3.12-slim
+    entrypoint: python
+    args:
+      - -c
+      - |
+        import sys, tomllib
+        etiqueta = "${TAG_NAME}".removeprefix("v")
+        for ruta in ["python/fundamentum_modelos/pyproject.toml", "python/fundamentum_adk/pyproject.toml"]:
+            version = tomllib.load(open(ruta, "rb"))["project"]["version"]
+            if version != etiqueta:
+                sys.exit(f"{ruta} dice {version} y la etiqueta {etiqueta}")
+        print("Versiones coinciden con", etiqueta)
+
+  - id: pruebas
+    name: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    entrypoint: bash
+    args: ["-ceu", "uv sync --all-packages --frozen && uv run ruff check . && uv run pytest -q"]
+
+  - id: token
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args: ["-ceu", "gcloud auth print-access-token > /workspace/.token"]
+
+  - id: publicar
+    name: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        rm -rf dist
+        uv build --package fundamentum-modelos --out-dir dist
+        uv build --package fundamentum-adk --out-dir dist
+        uv publish dist/* \
+          --publish-url "https://${_REGION}-python.pkg.dev/${PROJECT_ID}/fundamentum-py/" \
+          --username oauth2accesstoken --password "$$(cat /workspace/.token)"
+        rm -f /workspace/.token
+
+substitutions:
+  _REGION: us-central1
+
+options:
+  logging: CLOUD_LOGGING_ONLY
