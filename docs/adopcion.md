@@ -1,60 +1,82 @@
-# Adopción por app (fase A)
+# Adopción por app
 
-## Instalar el chasis
+Desde 0.2.0 la medición no requiere instalar el chasis: cada app usa el plugin oficial de ADK con
+la configuración de abajo y aplica el módulo de Terraform `infra/modulos/medicion`. Los paquetes de
+Python (`fundamentum-modelos`, `fundamentum-adk`) siguen publicados en Artifact Registry para lo que
+sí se comparte como código (registro tarea→modelo, `modelo_adk`).
 
-Los paquetes se publican en Artifact Registry, en el proyecto propio del chasis
-(`infra/proyecto`). Cada app declara el índice y fija la versión:
+## 1. Toda llamada a un modelo pasa por ADK
+
+Un `LlmAgent` (con `output_schema` si es una llamada de una vuelta) ejecutado por un `Runner` o por
+Agent Runtime, con el `App` de la app. Nada de `genai.Client(...).models.generate_content` directo.
+Cada app tiene `tests/test_solo_adk.py`, que falla si aparece fuera de las pruebas.
+
+## 2. Plugin de analítica, configuración estándar
 
 ```toml
-# pyproject.toml del paquete de la app que usa el chasis
-[project]
-dependencies = ["fundamentum-adk==0.1.0"]
-
-[[tool.uv.index]]
-name = "fundamentum"
-url = "https://us-central1-python.pkg.dev/fundamentum-mx/fundamentum-py/simple/"
-explicit = true
-
-[tool.uv.sources]
-fundamentum-adk = { index = "fundamentum" }
-fundamentum-modelos = { index = "fundamentum" }
+# pyproject.toml / requirements del agente
+google-adk[bigquery-analytics]==<versión de la app>
 ```
 
-Autenticación:
-- **En local:** `gcloud auth application-default login` y
-  `uv tool install keyring --with keyrings.google-artifactregistry-auth`; luego
-  `UV_KEYRING_PROVIDER=subprocess uv sync`.
-- **En Cloud Build:** la cuenta de Cloud Build de la app va en `lectores`. El paso de instalación
-  usa `UV_INDEX_FUNDAMENTUM_USERNAME=oauth2accesstoken` y
-  `UV_INDEX_FUNDAMENTUM_PASSWORD=$(gcloud auth print-access-token)`.
+```python
+import os
 
-## Iterum (Agent Runtime, ADK 2.10)
+from google.adk.apps import App
+from google.adk.plugins.bigquery_agent_analytics_plugin import (
+    BigQueryAgentAnalyticsPlugin,
+    BigQueryLoggerConfig,
+)
 
-1. Agregar `fundamentum-adk` a `agents/pyproject.toml`, desde Artifact Registry y con versión fija.
-2. Registrar el plugin en el `App` que despliega `deploy.py`:
-   ```python
-   from fundamentum_adk import PluginMedicion
 
-   app = App(name="iterum", root_agent=concierge, plugins=[PluginMedicion(app="iterum")])
-   ```
-   Los especialistas son `AgentTool` y heredan el plugin. Con eso se cubre el hueco de
-   `apps/web/src/lib/concierge/usage.ts:6-8`.
-3. Poner `state["usuario_interno"] = True` en las sesiones del fundador al crearlas en el BFF.
-4. Emitir `viaje_planeado` desde el servidor cuando el viaje cumpla la definición del roadmap.
-5. Aplicar `infra/modulos/medicion` con `project_id = travel-planner-509322`. Después del primer
-   registro, aplicar de nuevo con `crear_vistas = true`.
-6. Más adelante, `config.py` usa `modelo_adk()` y un `Registro("iterum", {...})`.
+def analitica(app: str) -> list:
+    """Sin `<APP>_ANALITICA_DATASET` no hay plugin: pruebas y evals no tocan BigQuery."""
+    dataset = os.environ.get(f"{app.upper()}_ANALITICA_DATASET")
+    if not dataset:
+        return []
+    return [
+        BigQueryAgentAnalyticsPlugin(
+            project_id=os.environ["GOOGLE_CLOUD_PROJECT"],
+            dataset_id=dataset,
+            config=BigQueryLoggerConfig(
+                # Privacidad: ni texto de prompts y respuestas, ni estado de la sesión.
+                payload_column_denylist=["content", "content_parts"],
+                log_session_metadata=False,
+                event_denylist=["STATE_DELTA"],
+                custom_tags={"app": app},
+            ),
+        )
+    ]
 
-## Vocatio (Cloud Run, google-genai directo; pasa a ADK en la fase C)
 
-1. Mientras dure M0: el `Evento` actual se emite también como línea JSON `llamada_modelo`, con los
-   mismos campos, desde `memoria.py` y `scriba.py`. El sink lo recoge sin cambiar Firestore.
-2. `usuario_cero` (#19) se traduce a `usuario_interno` en la línea.
-3. Aplicar `infra/modulos/medicion` en `vocatio-mx`.
+app = App(name="iterum", root_agent=root_agent, plugins=analitica("iterum"))
+```
 
-## Domi (sin llamadas todavía)
+En Agent Runtime: `AdkApp(app=app, enable_tracing=True)` para Cloud Trace. En Cloud Run, el `Runner`
+recibe el mismo `app`.
 
-1. F2.2 Iudex nace como `LlmAgent` con `modelo_adk(registro.modelo("iudex.ponderacion"))` y un
-   `Runner` con `PluginMedicion(app="domi")`.
-2. Agregar el botón "Agendé visita", que emite `resultado_entregado` con `visita_agendada`.
-3. Aplicar `infra/modulos/medicion` en el proyecto de Domi cuando exista (F0.2).
+La cuenta de servicio del agente necesita `roles/cloudtrace.agent` en el proyecto; los permisos de
+BigQuery los da el módulo.
+
+## 3. Módulo de Terraform
+
+```hcl
+module "medicion" {
+  source            = "git::https://github.com/Metuendus/fundamentum.git//infra/modulos/medicion?ref=v0.2.0"
+  project_id        = var.project_id
+  escritores        = ["serviceAccount:${google_service_account.agentes.email}"]
+  usuarios_internos = var.usuarios_internos
+  crear_vistas      = var.medicion_vistas # true en un segundo apply, tras la primera llamada
+}
+```
+
+## 4. Resultado entregado
+
+Ver [`medicion.md`](medicion.md#resultado_entregado).
+
+## Por app
+
+| App | Qué falta |
+|---|---|
+| Iterum | Plugin en el `App` del Concierge; el lector de documentos (`documents.py`) pasa a `LlmAgent` |
+| Vocatio | Memoria y Scriba pasan a `LlmAgent` con `Runner` en Cloud Run (#44) |
+| Domi | Iudex nace como `LlmAgent` con el plugin; botón "Agendé visita" |

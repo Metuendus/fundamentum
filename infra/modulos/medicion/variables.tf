@@ -4,13 +4,20 @@ variable "project_id" {
 }
 
 variable "dataset_id" {
-  type    = string
-  default = "fundamentum_medicion"
+  type        = string
+  default     = "agentes"
+  description = "Dataset donde escribe BigQueryAgentAnalyticsPlugin. Debe coincidir con el del plugin."
 }
 
 variable "location" {
   type    = string
   default = "US"
+}
+
+variable "escritores" {
+  type        = list(string)
+  default     = []
+  description = "Cuentas que corren agentes con el plugin, p. ej. serviceAccount:iterum-agents@…"
 }
 
 variable "retencion_dias" {
@@ -22,5 +29,11 @@ variable "retencion_dias" {
 variable "crear_vistas" {
   type        = bool
   default     = false
-  description = "Activar en un segundo apply, cuando el sink ya creó sus tablas."
+  description = "Activar en un segundo apply, cuando ya existan agent_events y las tablas del sink."
+}
+
+variable "usuarios_internos" {
+  type        = list(string)
+  default     = []
+  description = "uids del fundador y del equipo; las vistas los excluyen de costo y resultados."
 }

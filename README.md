@@ -9,9 +9,9 @@ evaluaciones y el design system. Cada app conserva sus agentes, su dominio y su 
 
 | Pieza | Paquete | Estado |
 |---|---|---|
-| Registro tarea→modelo, precios, costo | `python/fundamentum_modelos` | 0.1.0 · fase A |
-| Plugin de medición, modelos ADK (Gemini y Claude) | `python/fundamentum_adk` | 0.1.0 · fase A |
-| Dataset, sink y vistas de medición | `infra/modulos/medicion` | fase A |
+| Registro tarea→modelo, precios, costo (también como SQL) | `python/fundamentum_modelos` | 0.2.0 · fase A |
+| Modelos ADK (Gemini y Claude), `emitir_resultado` | `python/fundamentum_adk` | 0.2.0 · fase A |
+| Medición nativa: dataset del plugin de ADK y vistas de costo | `infra/modulos/medicion` | 0.2.0 · fase A |
 | Proyecto propio: Artifact Registry y publicación | `infra/proyecto` | fase A |
 | Eventos, Despachador, Propuesta, Fuente | `python/fundamentum_eventos` | fase B |
 | Runner de evals con gates de costo y latencia | `python/fundamentum_evals` | fase D |

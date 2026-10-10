@@ -1,21 +1,54 @@
-# Medición común: los registros `llamada_modelo` y `resultado_entregado` que las apps escriben
-# en stdout (JSON) llegan a Cloud Logging y un sink los copia a BigQuery. Un dataset por
-# proyecto, con las mismas vistas en las tres apps; Looker Studio las combina.
+# Medición común con el plugin oficial de ADK (BigQueryAgentAnalyticsPlugin).
+#
+# - El plugin del agente escribe cada evento (llamadas a modelos, herramientas, agentes) en la tabla
+#   `agent_events` del dataset `agentes`, que crea él mismo junto con sus vistas `v_*`.
+# - Este módulo crea ese dataset, da permiso de escritura a las cuentas de los agentes y agrega las
+#   vistas de costo (`costo_*`), que cruzan los tokens con la tabla de precios del chasis.
+# - Los resultados entregados (`resultado_entregado`) siguen llegando por una línea JSON en stdout,
+#   que un sink de Cloud Logging copia al dataset `fundamentum_resultados`.
 
-resource "google_bigquery_dataset" "medicion" {
+resource "google_bigquery_dataset" "agentes" {
   project     = var.project_id
   dataset_id  = var.dataset_id
   location    = var.location
-  description = "Medición de Fundamentum: llamadas a modelos y resultados entregados."
+  description = "Eventos de los agentes (plugin BigQuery Agent Analytics de ADK) y vistas de costo de Fundamentum."
 
   default_partition_expiration_ms = var.retencion_dias * 24 * 60 * 60 * 1000
 }
 
-resource "google_logging_project_sink" "medicion" {
+# El plugin escribe con la Storage Write API, crea su tabla y sus vistas al arrancar.
+resource "google_bigquery_dataset_iam_member" "escritores" {
+  for_each = toset(var.escritores)
+
+  project    = var.project_id
+  dataset_id = google_bigquery_dataset.agentes.dataset_id
+  role       = "roles/bigquery.dataEditor"
+  member     = each.value
+}
+
+# Crear vistas es un trabajo de consulta.
+resource "google_project_iam_member" "escritores_jobs" {
+  for_each = toset(var.escritores)
+
+  project = var.project_id
+  role    = "roles/bigquery.jobUser"
+  member  = each.value
+}
+
+# ─── Resultados entregados ───────────────────────────────────────────────────
+
+resource "google_bigquery_dataset" "resultados" {
   project     = var.project_id
-  name        = "fundamentum-medicion"
-  destination = "bigquery.googleapis.com/projects/${var.project_id}/datasets/${google_bigquery_dataset.medicion.dataset_id}"
-  filter      = "jsonPayload.tipo=\"llamada_modelo\" OR jsonPayload.tipo=\"resultado_entregado\""
+  dataset_id  = "fundamentum_resultados"
+  location    = var.location
+  description = "Líneas resultado_entregado de las apps, copiadas por el sink de Cloud Logging."
+}
+
+resource "google_logging_project_sink" "resultados" {
+  project     = var.project_id
+  name        = "fundamentum-resultados"
+  destination = "bigquery.googleapis.com/projects/${var.project_id}/datasets/${google_bigquery_dataset.resultados.dataset_id}"
+  filter      = "jsonPayload.tipo=\"resultado_entregado\""
 
   unique_writer_identity = true
 
@@ -26,52 +59,49 @@ resource "google_logging_project_sink" "medicion" {
 
 resource "google_bigquery_dataset_iam_member" "sink" {
   project    = var.project_id
-  dataset_id = google_bigquery_dataset.medicion.dataset_id
+  dataset_id = google_bigquery_dataset.resultados.dataset_id
   role       = "roles/bigquery.dataEditor"
-  member     = google_logging_project_sink.medicion.writer_identity
+  member     = google_logging_project_sink.resultados.writer_identity
 }
 
-# Las vistas van en otro dataset: las consultas con comodín (`dataset.*`) no admiten vistas
-# entre las tablas que cubren. Leen las tablas que crea el sink, que solo existen después del
-# primer registro; por eso se crean en un segundo `apply` con `crear_vistas = true`.
-resource "google_bigquery_dataset" "vistas" {
-  project     = var.project_id
-  dataset_id  = "${var.dataset_id}_vistas"
-  location    = var.location
-  description = "Vistas de la medición de Fundamentum (mismas en las tres apps)."
-}
+# ─── Vistas de costo ─────────────────────────────────────────────────────────
+#
+# Leen `agent_events` (lo crea el plugin con la primera llamada) y las tablas del sink (con el
+# primer resultado). Por eso se crean en un segundo `apply` con `crear_vistas = true`.
 
 locals {
   plantilla = {
-    proyecto = var.project_id
-    datos    = google_bigquery_dataset.medicion.dataset_id
-    vistas   = google_bigquery_dataset.vistas.dataset_id
+    proyecto   = var.project_id
+    agentes    = google_bigquery_dataset.agentes.dataset_id
+    resultados = google_bigquery_dataset.resultados.dataset_id
+    precios    = file("${path.module}/vistas/precios.sql")
+    # Lista de uids como literal de BigQuery: ["a","b"] (comillas dobles válidas en GoogleSQL).
+    usuarios_internos = jsonencode(var.usuarios_internos)
   }
-  base = var.crear_vistas ? toset(["llamadas", "resultados"]) : toset([])
 }
 
-resource "google_bigquery_table" "base" {
-  for_each = local.base
+resource "google_bigquery_table" "costo_llamadas" {
+  count = var.crear_vistas ? 1 : 0
 
   project             = var.project_id
-  dataset_id          = google_bigquery_dataset.vistas.dataset_id
-  table_id            = "v_${each.key}"
+  dataset_id          = google_bigquery_dataset.agentes.dataset_id
+  table_id            = "costo_llamadas"
   deletion_protection = false
 
   view {
-    query          = templatefile("${path.module}/vistas/${each.key}.sql", local.plantilla)
+    query          = templatefile("${path.module}/vistas/costo_llamadas.sql", local.plantilla)
     use_legacy_sql = false
   }
 
-  depends_on = [google_bigquery_dataset_iam_member.sink]
+  depends_on = [google_bigquery_dataset_iam_member.escritores]
 }
 
 resource "google_bigquery_table" "costo_diario" {
   count = var.crear_vistas ? 1 : 0
 
   project             = var.project_id
-  dataset_id          = google_bigquery_dataset.vistas.dataset_id
-  table_id            = "v_costo_diario"
+  dataset_id          = google_bigquery_dataset.agentes.dataset_id
+  table_id            = "costo_diario"
   deletion_protection = false
 
   view {
@@ -79,15 +109,31 @@ resource "google_bigquery_table" "costo_diario" {
     use_legacy_sql = false
   }
 
-  depends_on = [google_bigquery_table.base]
+  depends_on = [google_bigquery_table.costo_llamadas]
+}
+
+resource "google_bigquery_table" "resultados" {
+  count = var.crear_vistas ? 1 : 0
+
+  project             = var.project_id
+  dataset_id          = google_bigquery_dataset.agentes.dataset_id
+  table_id            = "resultados"
+  deletion_protection = false
+
+  view {
+    query          = templatefile("${path.module}/vistas/resultados.sql", local.plantilla)
+    use_legacy_sql = false
+  }
+
+  depends_on = [google_bigquery_dataset_iam_member.sink]
 }
 
 resource "google_bigquery_table" "costo_por_resultado" {
   count = var.crear_vistas ? 1 : 0
 
   project             = var.project_id
-  dataset_id          = google_bigquery_dataset.vistas.dataset_id
-  table_id            = "v_costo_por_resultado"
+  dataset_id          = google_bigquery_dataset.agentes.dataset_id
+  table_id            = "costo_por_resultado"
   deletion_protection = false
 
   view {
@@ -95,5 +141,5 @@ resource "google_bigquery_table" "costo_por_resultado" {
     use_legacy_sql = false
   }
 
-  depends_on = [google_bigquery_table.costo_diario]
+  depends_on = [google_bigquery_table.costo_diario, google_bigquery_table.resultados]
 }

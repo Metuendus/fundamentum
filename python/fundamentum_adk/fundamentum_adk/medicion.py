@@ -1,5 +1,8 @@
 """Plugin de medición: un registro `llamada_modelo` por cada llamada a un modelo.
 
+Obsoleto desde 0.2.0 y se borra en 0.3: las apps miden con `BigQueryAgentAnalyticsPlugin` de ADK
+y las vistas de `infra/modulos/medicion` (ver `docs/medicion.md`). `emitir_resultado` se queda.
+
 Se registra en el `App` o el `Runner` de ADK y alcanza también a los especialistas que corren como
 `AgentTool` (heredan los plugins del runner padre por defecto). Cada registro es una línea JSON en
 stdout: Cloud Run y Agent Runtime la convierten en `jsonPayload` de Cloud Logging, y un sink la
@@ -13,6 +16,7 @@ import json
 import logging
 import sys
 import time
+import warnings
 from collections.abc import Callable
 from typing import Any
 
@@ -59,6 +63,11 @@ def emitir_resultado(
 
 class PluginMedicion(BasePlugin):
     def __init__(self, app: str, emisor: Emisor = emitir_stdout) -> None:
+        warnings.warn(
+            "PluginMedicion es obsoleto y se borra en 0.3; usa BigQueryAgentAnalyticsPlugin de ADK",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(name="fundamentum_medicion")
         self.app = app
         self.emisor = emisor

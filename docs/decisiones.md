@@ -1,20 +1,28 @@
 # Decisiones
 
-## 1. Medición por línea JSON y sink, no solo con el plugin de BigQuery Agent Analytics
+## 1. Medición nativa de ADK, no un plugin propio (2026-10-10, reemplaza la de 0.1.0)
 
-ADK trae `BigQueryAgentAnalyticsPlugin`, que registra tokens, latencia y contenido. Registra tokens,
-no costo, y escribe directo a BigQuery con la Write API.
+Se mide con lo que ya trae Google y el chasis solo agrega la tabla de precios:
 
-El chasis emite una línea JSON por llamada, con el costo ya calculado, y un sink de Cloud Logging la
-lleva a BigQuery. Razones:
+- **Tokens y latencia:** `BigQueryAgentAnalyticsPlugin` de ADK escribe cada llamada a un modelo en
+  `agentes.agent_events`, incluidos los especialistas que corren como `AgentTool`.
+- **Árbol de cada conversación:** Cloud Trace, con `AdkApp(app=app, enable_tracing=True)`.
+- **Costo:** la vista `costo_llamadas` cruza los tokens con `PRECIOS`, generada como SQL desde
+  `fundamentum_modelos`. Una prueba falla si se desfasan.
 
-- Funciona igual en Cloud Run y en Agent Runtime, sin credenciales de BigQuery en el agente.
-- El mismo contrato sirve para Vocatio antes de migrar a ADK y para la web en TypeScript.
-- No guarda contenido de conversaciones. Es privacidad por defecto, y las tres apps manejan datos
-  personales.
+Razones:
+- El plugin propio (`PluginMedicion`) duplicaba lo que ADK ya hace, y obligaba a cada app a instalar
+  el chasis desde Artifact Registry, incluso dentro de Agent Runtime.
+- El costo es un cálculo sobre tokens, así que vive mejor en SQL, donde se puede recalcular hacia
+  atrás si cambia un precio.
 
-El plugin de ADK sigue disponible para depurar trayectorias y se puede agregar al `App` sin
-conflicto.
+**Privacidad, no negociable:** la configuración estándar (`docs/adopcion.md`) quita `content` y
+`content_parts`, no registra el estado de la sesión (`log_session_metadata=False`) ni sus cambios
+(`STATE_DELTA`). Los usuarios internos se marcan por uid en la vista, no en el estado.
+
+**Consecuencia:** ninguna llamada a un modelo fuera de ADK. Lo que no pasa por ADK no se mide ni se
+traza. Cada app lo vigila con una prueba que falla si aparece `genai.Client` o `generate_content`
+fuera de las pruebas.
 
 ## 2. Tarifa estándar, no promocional
 

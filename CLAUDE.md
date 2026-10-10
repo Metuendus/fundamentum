@@ -7,10 +7,14 @@ cambia aquí lo heredan tres apps: cada cambio es una versión nueva, con prueba
 ## Reglas
 
 - **Todo en Google Cloud.** Modelos solo vía Model Garden (Gemini y Claude); infraestructura en GCP.
-- **ADK Python 2.x** es la única forma de llamar a un modelo. Guardrails y medición son Plugins, no
-  callbacks.
+- **Ninguna llamada a un modelo fuera de ADK.** ADK Python 2.x (`LlmAgent` + `Runner` o Agent
+  Runtime) es la única forma; lo que no pasa por ADK no se mide ni se traza. Guardrails son Plugins,
+  no callbacks.
+- **Medición nativa.** `BigQueryAgentAnalyticsPlugin` con la configuración de `docs/adopcion.md`
+  (sin `content`, sin estado de sesión) y Cloud Trace. El chasis solo pone precios y vistas.
 - **Ningún modelo sin precio.** `PRECIOS` lleva fuente y fecha; un modelo sin precio falla en voz
-  alta y la medición lo registra como `precio_desconocido`, nunca como costo 0. Tarifa estándar, no
+  alta y la vista lo marca como `precio_desconocido`, nunca como costo 0. Tras cambiar `PRECIOS`,
+  `uv run python -m fundamentum_modelos.sql`. Tarifa estándar, no
   promocional.
 - **La medición nunca rompe una conversación.** Un error al medir se registra y la llamada sigue.
 - **No usar la familia Gemini 2.5** (retirada el 16 de octubre de 2026).

@@ -11,12 +11,16 @@ package = false
 members = ["python/fundamentum_modelos", "python/fundamentum_adk"]
 
 [dependency-groups]
-dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.7"]
+dev = ["duckdb>=1.1", "pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.7", "sqlglot>=25"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 addopts = "--import-mode=importlib"
-testpaths = ["python/fundamentum_modelos/tests", "python/fundamentum_adk/tests"]
+testpaths = [
+  "python/fundamentum_modelos/tests",
+  "python/fundamentum_adk/tests",
+  "infra/modulos/medicion/tests",
+]
 
 # Misma configuración que Vocatio y Domi.
 [tool.ruff]

@@ -16,6 +16,8 @@ from google.adk.runners import InMemoryRunner
 from google.adk.tools.agent_tool import AgentTool
 from google.genai import types
 
+pytestmark = pytest.mark.filterwarnings("ignore:PluginMedicion es obsoleto:DeprecationWarning")
+
 
 class LlmFalso(BaseLlm):
     """Responde con un guion fijo y reporta un uso conocido."""
@@ -120,3 +122,8 @@ def test_resultado_y_salida_json(capsys):
     linea = json.loads(capsys.readouterr().out)
     assert linea["tipo"] == linea["message"] == "resultado_entregado"
     assert linea["resultado_tipo"] == "visita_agendada" and linea["severity"] == "INFO"
+
+
+def test_plugin_avisa_que_es_obsoleto():
+    with pytest.warns(DeprecationWarning, match="BigQueryAgentAnalyticsPlugin"):
+        PluginMedicion(app="iterum")

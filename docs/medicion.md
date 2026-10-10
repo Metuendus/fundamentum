@@ -1,39 +1,49 @@
-# Contrato de medición
+# Medición
 
-Dos registros, una línea JSON cada uno en stdout. Cloud Run y Agent Runtime los convierten en
-`jsonPayload` de Cloud Logging; el sink de `infra/modulos/medicion` los copia a BigQuery.
+Tres piezas, todas nativas de Google salvo la tabla de precios:
 
-## `llamada_modelo`
-
-Lo emite `PluginMedicion` (`fundamentum_adk`) en cada llamada a un modelo, incluidos los
-especialistas que corren como `AgentTool`.
-
-| Campo | Tipo | Nota |
+| Pieza | Qué da | Dónde |
 |---|---|---|
-| `tipo` | `"llamada_modelo"` | |
-| `app` | texto | `iterum`, `vocatio`, `domi` |
-| `agente` | texto | nombre del agente de ADK |
-| `invocacion`, `sesion` | texto | ids de ADK |
-| `uid` | texto | `user_id` de la sesión |
-| `usuario_interno` | bool | `state["usuario_interno"]`; excluye al fundador de las métricas |
-| `modelo` | texto | normalizado, sin ruta ni `@versión` |
-| `tokens_entrada` | entero | incluye los leídos de caché |
-| `tokens_cache_lectura`, `tokens_cache_escritura` | entero | desglose de la entrada |
-| `tokens_salida`, `tokens_pensamiento` | entero | el pensamiento se cobra como salida |
-| `costo_usd` | número o nulo | nulo si el modelo no tiene precio |
-| `latencia_ms` | entero | |
-| `error` | texto o nulo | clase de la excepción o `precio_desconocido` |
+| `BigQueryAgentAnalyticsPlugin` (ADK) | tokens, latencia, modelo y agente de cada llamada | `agentes.agent_events` |
+| Cloud Trace (`enable_tracing=True`) | el árbol de cada conversación | consola de Trace |
+| Vistas de `infra/modulos/medicion` | costo en USD y costo por resultado | dataset `agentes` |
+
+## Qué se registra y qué no
+
+La configuración estándar está en [`adopcion.md`](adopcion.md). Con ella:
+
+- **Sí:** tipo de evento, agente, `user_id`, sesión, invocación, `model` / `model_version`,
+  `usage_metadata` (tokens), `latency_ms`, `finish_reason`, errores y `custom_tags.app`.
+- **No:** el texto de prompts y respuestas (`content`, `content_parts`), el estado de la sesión ni
+  sus cambios. Las tres apps manejan datos personales.
+
+## Vistas
+
+- `costo_llamadas`: una fila por respuesta final de un modelo, con `costo_usd` y
+  `precio_desconocido`. El modelo se normaliza desde `model_version` (sin ruta ni `@versión`) y se
+  le asigna el precio del prefijo más largo de `PRECIOS`. Un modelo sin precio deja el costo en
+  nulo, nunca en 0.
+- `costo_diario`: llamadas, errores, tokens, costo y p95 de latencia por día, app, agente y modelo,
+  sin usuarios internos.
+- `resultados`: los `resultado_entregado` de la app.
+- `costo_por_resultado`: costo de modelos entre resultados, por mes y app.
+
+`usuario_interno` sale de la variable `usuarios_internos` del módulo (lista de uids), así que
+cambiar la lista corrige también la historia.
+
+Los tokens de pensamiento se cobran como salida. La entrada leída de caché se cobra a la tarifa de
+caché. El tramo de contexto largo (Claude Haiku 5.5 desde 100K tokens) se aplica por llamada.
 
 ## `resultado_entregado`
 
-Lo emite la app cuando cumple el resultado que promete. Desde Python: `emitir_resultado(...)`.
-Desde TypeScript basta escribir la misma línea en stdout:
+Lo emite la app cuando cumple el resultado que promete: una línea JSON en stdout que el sink del
+módulo copia a `fundamentum_resultados`. Desde Python es la misma línea con `json.dumps`
+(o `fundamentum_adk.emitir_resultado` si la app ya instala el chasis); desde TypeScript:
 
 ```ts
 console.log(JSON.stringify({
   severity: "INFO", message: "resultado_entregado", tipo: "resultado_entregado",
   app: "domi", resultado_tipo: "visita_agendada", resultado_id: inmuebleId, uid,
-  usuario_interno: false,
 }));
 ```
 
@@ -43,13 +53,7 @@ console.log(JSON.stringify({
 | Vocatio | la estrella del norte del PRD |
 | Domi | `visita_agendada`: la marca el usuario; la app nunca contacta al anunciante |
 
-## Vistas (dataset `fundamentum_medicion_vistas`)
-
-- `v_llamadas`: una fila por llamada.
-- `v_resultados`: una fila por resultado.
-- `v_costo_diario`: costo, tokens, errores y p95 de latencia por día, app, agente y modelo, sin
-  usuarios internos.
-- `v_costo_por_resultado`: costo de modelos dividido entre resultados, por mes y app.
+## Conciliación
 
 El costo de las vistas es una estimación con la tarifa estándar. Se concilia contra el export de
 facturación. La diferencia esperada viene de las promociones (Gemini 3.8 Flash cuesta la mitad hasta
