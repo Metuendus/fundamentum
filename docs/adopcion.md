@@ -1,67 +1,69 @@
 # Adopción por app
 
-Desde 0.2.0 la medición no requiere instalar el chasis: cada app usa el plugin oficial de ADK con
-la configuración de abajo y aplica el módulo de Terraform `infra/modulos/medicion`. Los paquetes de
-Python (`fundamentum-modelos`, `fundamentum-adk`) siguen publicados en Artifact Registry para lo que
-sí se comparte como código (registro tarea→modelo, `modelo_adk`).
+El chasis es **obligatorio** en Iterum, Vocatio y Domi (decisión del 10 de octubre de 2026). Lo
+compartido se usa desde aquí y nunca se reimplementa en la app; si falta algo, se agrega primero al
+chasis.
 
-## 1. Toda llamada a un modelo pasa por ADK
+## 1. Instalar, fijado por etiqueta
 
-Un `LlmAgent` (con `output_schema` si es una llamada de una vuelta) ejecutado por un `Runner` o por
-Agent Runtime, con el `App` de la app. Nada de `genai.Client(...).models.generate_content` directo.
-Cada app tiene `tests/test_solo_adk.py`, que falla si aparece fuera de las pruebas.
-
-## 2. Plugin de analítica, configuración estándar
+El repo es público: cada app lo instala desde git, con la etiqueta de la versión. No hace falta
+Artifact Registry, credenciales ni pasos extra en CI ni en Agent Runtime.
 
 ```toml
-# pyproject.toml / requirements del agente
-google-adk[bigquery-analytics]==<versión de la app>
+# pyproject.toml del paquete de agentes
+[project]
+dependencies = ["fundamentum-adk==0.3.0", "fundamentum-modelos==0.3.0"]
+
+[tool.uv.sources]
+fundamentum-adk = { git = "https://github.com/Metuendus/fundamentum", tag = "v0.3.0", subdirectory = "python/fundamentum_adk" }
+fundamentum-modelos = { git = "https://github.com/Metuendus/fundamentum", tag = "v0.3.0", subdirectory = "python/fundamentum_modelos" }
 ```
+
+Con pip (Iterum, Agent Runtime):
+`fundamentum-adk @ git+https://github.com/Metuendus/fundamentum@v0.3.0#subdirectory=python/fundamentum_adk`
+y lo mismo para `fundamentum-modelos`.
+
+Para subir de versión se cambian juntas la versión y las etiquetas, y se corre `uv lock`.
+
+## 2. Toda llamada a un modelo pasa por ADK
+
+- **Conversación** (Iterum): `App(name, root_agent, plugins=analitica("iterum"))`. En Agent Runtime,
+  `AdkApp(app=app, enable_tracing=True)` para Cloud Trace.
+- **Una sola vuelta** (extraer, clasificar, redactar):
 
 ```python
-import os
+from fundamentum_adk import agente_unico, analitica, llamar_sync, modelo_adk
 
-from google.adk.apps import App
-from google.adk.plugins.bigquery_agent_analytics_plugin import (
-    BigQueryAgentAnalyticsPlugin,
-    BigQueryLoggerConfig,
+PLUGINS = analitica("vocatio")  # una vez por proceso; [] sin VOCATIO_ANALITICA_DATASET
+
+agente = agente_unico(
+    "memoria",
+    modelo_adk("gemini-3.8-flash", proyecto="vocatio-mx", credenciales=cred),
+    esquema=ExtraccionCv,  # Pydantic, types.Schema o dict de Gemini
+    instruccion=INSTRUCCION,
+    temperatura=0.1,
 )
-
-
-def analitica(app: str) -> list:
-    """Sin `<APP>_ANALITICA_DATASET` no hay plugin: pruebas y evals no tocan BigQuery."""
-    dataset = os.environ.get(f"{app.upper()}_ANALITICA_DATASET")
-    if not dataset:
-        return []
-    return [
-        BigQueryAgentAnalyticsPlugin(
-            project_id=os.environ["GOOGLE_CLOUD_PROJECT"],
-            dataset_id=dataset,
-            config=BigQueryLoggerConfig(
-                # Privacidad: ni texto de prompts y respuestas, ni estado de la sesión.
-                payload_column_denylist=["content", "content_parts"],
-                log_session_metadata=False,
-                event_denylist=["STATE_DELTA"],
-                custom_tags={"app": app},
-            ),
-        )
-    ]
-
-
-app = App(name="iterum", root_agent=root_agent, plugins=analitica("iterum"))
+r = llamar_sync(agente, [parte_pdf, "Extrae el CV."], plugins=PLUGINS, usuario=uid, app="vocatio")
+r.texto, r.uso, r.costo_usd()  # el costo va al Evento y al presupuesto del Despachador
 ```
 
-En Agent Runtime: `AdkApp(app=app, enable_tracing=True)` para Cloud Trace. En Cloud Run, el `Runner`
-recibe el mismo `app`.
+`llamar` (async) es lo mismo dentro de una herramienta. Ahí se pasan los plugins del `App`, para que
+la llamada quede medida.
 
-La cuenta de servicio del agente necesita `roles/cloudtrace.agent` en el proyecto; los permisos de
-BigQuery los da el módulo.
+Nada de `genai.Client(...).models.generate_content`.
 
-## 3. Módulo de Terraform
+## 3. Analítica
+
+`analitica(app)` devuelve el plugin oficial de ADK con la configuración privada del chasis: sin
+texto de la conversación y sin estado de la sesión (ver `medicion.md`). Lee
+`<APP>_ANALITICA_DATASET` y `GOOGLE_CLOUD_PROJECT`, o los recibe como argumentos. La cuenta del
+agente necesita `roles/cloudtrace.agent`; los permisos de BigQuery los da el módulo.
+
+## 4. Módulo de Terraform
 
 ```hcl
 module "medicion" {
-  source            = "git::https://github.com/Metuendus/fundamentum.git//infra/modulos/medicion?ref=v0.2.0"
+  source            = "git::https://github.com/Metuendus/fundamentum.git//infra/modulos/medicion?ref=v0.3.0"
   project_id        = var.project_id
   escritores        = ["serviceAccount:${google_service_account.agentes.email}"]
   usuarios_internos = var.usuarios_internos
@@ -69,14 +71,17 @@ module "medicion" {
 }
 ```
 
-## 4. Resultado entregado
+## 5. Resultado entregado
 
 Ver [`medicion.md`](medicion.md#resultado_entregado).
 
-## Por app
+## Estado por app
 
-| App | Qué falta |
+Desarrollo de funcionalidades en pausa hasta Fundamentum 1.0 (backend: IA y medición, eventos y
+Despachador, guardrails y evals). Al reanudar:
+
+| App | Adopción |
 |---|---|
-| Iterum | Plugin en el `App` del Concierge; el lector de documentos (`documents.py`) pasa a `LlmAgent` |
-| Vocatio | Memoria y Scriba pasan a `LlmAgent` con `Runner` en Cloud Run (#44) |
-| Domi | Iudex nace como `LlmAgent` con el plugin; botón "Agendé visita" |
+| Iterum | El lector (`documents.py`) y `analitica` desde el chasis; Python 3.11 ya es compatible |
+| Vocatio | Memoria y Scriba con `agente_unico` y `llamar_sync`; `Evento` y Despachador del chasis (0.4) |
+| Domi | Iudex nace con `agente_unico`; Despachador del chasis (0.4) |

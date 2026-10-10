@@ -1,8 +1,8 @@
 [project]
 name = "fundamentum-modelos"
-version = "0.2.0"
+version = "0.3.0"
 description = "Registro tarea→modelo, precios de Model Garden y costo por llamada."
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.11,<3.13"
 dependencies = []
 
 [build-system]

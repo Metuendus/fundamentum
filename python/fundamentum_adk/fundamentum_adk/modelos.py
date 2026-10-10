@@ -1,6 +1,7 @@
 """Objetos de modelo de ADK con los defaults comunes, para Gemini y Claude en Model Garden."""
 
 import os
+from typing import Any
 
 from fundamentum_modelos import normalizar
 from google.adk.models import Gemini
@@ -17,15 +18,20 @@ UBICACION_CLAUDE = os.environ.get("FUNDAMENTUM_UBICACION_CLAUDE", "global")
 REINTENTOS = types.HttpRetryOptions(attempts=5, initial_delay=2.0, max_delay=30.0)
 
 
-def modelo_adk(nombre: str, proyecto: str | None = None) -> BaseLlm:
-    """`gemini-*` → `Gemini` en el endpoint global; `claude-*` → `Claude` vía Model Garden."""
+def modelo_adk(nombre: str, proyecto: str | None = None, credenciales: Any = None) -> BaseLlm:
+    """`gemini-*` → `Gemini` en el endpoint global; `claude-*` → `Claude` vía Model Garden.
+
+    `proyecto` y `credenciales` fijan a qué proyecto se cobra Gemini (p. ej. credenciales
+    suplantadas en local); sin ellos, los de ADC y `GOOGLE_CLOUD_PROJECT`.
+    """
     base = normalizar(nombre)
     if base.startswith("gemini-"):
-        return Gemini(
-            model=nombre,
-            client_kwargs={"location": UBICACION_GEMINI},
-            retry_options=REINTENTOS,
-        )
+        cliente: dict[str, Any] = {"location": UBICACION_GEMINI}
+        if proyecto:
+            cliente |= {"vertexai": True, "project": proyecto}
+        if credenciales is not None:
+            cliente["credentials"] = credenciales
+        return Gemini(model=nombre, client_kwargs=cliente, retry_options=REINTENTOS)
     if base.startswith("claude-"):
         from google.adk.models.anthropic_llm import Claude  # requiere anthropic[vertex]
 

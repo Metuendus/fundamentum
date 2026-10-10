@@ -1,9 +1,9 @@
 [project]
 name = "fundamentum-adk"
-version = "0.2.0"
-description = "Plugins y modelos de ADK comunes: medición de costo por llamada, Gemini y Claude en Model Garden."
-requires-python = ">=3.12,<3.13"
-dependencies = ["fundamentum-modelos>=0.2,<0.3", "google-adk>=2.10,<3"]
+version = "0.3.0"
+description = "Piezas de ADK comunes: llamadas de una vuelta, medición nativa y modelos Gemini y Claude en Model Garden."
+requires-python = ">=3.11,<3.13"
+dependencies = ["fundamentum-modelos>=0.3,<0.4", "google-adk[bigquery-analytics]>=2.10,<3"]
 
 [project.optional-dependencies]
 claude = ["anthropic[vertex]>=0.40"]

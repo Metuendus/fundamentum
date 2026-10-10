@@ -21,6 +21,15 @@ class Uso:
     cache_escritura: int = 0
     pensamiento: int = 0
 
+    def __add__(self, otro: "Uso") -> "Uso":
+        return Uso(
+            entrada=self.entrada + otro.entrada,
+            salida=self.salida + otro.salida,
+            cache_lectura=self.cache_lectura + otro.cache_lectura,
+            cache_escritura=self.cache_escritura + otro.cache_escritura,
+            pensamiento=self.pensamiento + otro.pensamiento,
+        )
+
     @classmethod
     def desde_metadata(cls, metadata: Any) -> "Uso":
         """Lee un `GenerateContentResponseUsageMetadata` (Gemini, o Claude traducido por ADK)."""

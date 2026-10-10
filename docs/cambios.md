@@ -1,5 +1,20 @@
 # Cambios
 
+## 0.3.0 · 2026-10-10
+
+- `fundamentum-adk`:
+  - `agente_unico`, `llamar` y `llamar_sync`: llamadas de una sola vuelta por ADK, sin herramientas
+    ni historial, con salida por esquema. Comparten los plugins de la app sin cerrarlos y devuelven
+    texto, uso por respuesta y costo.
+  - `analitica(app)`: el plugin oficial de BigQuery con la configuración privada.
+  - `modelo_adk` acepta `proyecto` y `credenciales` para Gemini.
+  - **Se borra `PluginMedicion`**, como se anunció en 0.2.0.
+  - Depende de `google-adk[bigquery-analytics]`.
+- `fundamentum-modelos`: `Uso` se puede sumar.
+- Python 3.11 o 3.12 (Iterum corre en 3.11).
+- Adopción por git y etiqueta, sin Artifact Registry: el repo es público. Los paquetes se siguen
+  publicando al etiquetar.
+
 ## 0.2.0 · 2026-10-10
 
 - **Medición nativa de ADK.** `infra/modulos/medicion` ya no lleva sink de `llamada_modelo`: crea el

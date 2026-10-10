@@ -9,8 +9,8 @@ evaluaciones y el design system. Cada app conserva sus agentes, su dominio y su 
 
 | Pieza | Paquete | Estado |
 |---|---|---|
-| Registro tarea→modelo, precios, costo (también como SQL) | `python/fundamentum_modelos` | 0.2.0 · fase A |
-| Modelos ADK (Gemini y Claude), `emitir_resultado` | `python/fundamentum_adk` | 0.2.0 · fase A |
+| Registro tarea→modelo, precios, costo (también como SQL) | `python/fundamentum_modelos` | 0.3.0 · fase A |
+| Llamadas de una vuelta, analítica, modelos ADK (Gemini y Claude), resultados | `python/fundamentum_adk` | 0.3.0 · fase A |
 | Medición nativa: dataset del plugin de ADK y vistas de costo | `infra/modulos/medicion` | 0.2.0 · fase A |
 | Proyecto propio: Artifact Registry y publicación | `infra/proyecto` | fase A |
 | Eventos, Despachador, Propuesta, Fuente | `python/fundamentum_eventos` | fase B |
@@ -31,7 +31,8 @@ terraform fmt -check -recursive infra   # el validate de cada módulo corre en C
 ## Reglas
 
 - Entra solo lo que ya usan dos apps, o lo que es estándar obligatorio (medición, IA).
-- Las apps fijan versión; nada de submódulos ni de `main`.
+- Obligatorio en las tres apps; lo compartido nunca se reimplementa en una app.
+- Las apps fijan versión por etiqueta de git; nada de submódulos ni de `main`.
 - Los esquemas base viven aquí; cada app los extiende en su `packages/schemas`.
 - El chasis nunca bloquea un release candidate: si una app necesita algo urgente, lo hace local y
   luego lo sube.
