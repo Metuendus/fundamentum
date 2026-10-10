@@ -12,16 +12,24 @@ Artifact Registry, credenciales ni pasos extra en CI ni en Agent Runtime.
 ```toml
 # pyproject.toml del paquete de agentes
 [project]
-dependencies = ["fundamentum-adk==0.4.0", "fundamentum-modelos==0.4.0", "fundamentum-eventos[firestore]==0.4.0"]
+dependencies = [
+  "fundamentum-adk==1.0.0",
+  "fundamentum-modelos==1.0.0",
+  "fundamentum-eventos[firestore]==1.0.0",
+]
+
+[dependency-groups]
+dev = ["fundamentum-evals==1.0.0"]
 
 [tool.uv.sources]
-fundamentum-adk = { git = "https://github.com/Metuendus/fundamentum", tag = "v0.4.0", subdirectory = "python/fundamentum_adk" }
-fundamentum-modelos = { git = "https://github.com/Metuendus/fundamentum", tag = "v0.4.0", subdirectory = "python/fundamentum_modelos" }
-fundamentum-eventos = { git = "https://github.com/Metuendus/fundamentum", tag = "v0.4.0", subdirectory = "python/fundamentum_eventos" }
+fundamentum-adk = { git = "https://github.com/Metuendus/fundamentum", tag = "v1.0.0", subdirectory = "python/fundamentum_adk" }
+fundamentum-modelos = { git = "https://github.com/Metuendus/fundamentum", tag = "v1.0.0", subdirectory = "python/fundamentum_modelos" }
+fundamentum-eventos = { git = "https://github.com/Metuendus/fundamentum", tag = "v1.0.0", subdirectory = "python/fundamentum_eventos" }
+fundamentum-evals = { git = "https://github.com/Metuendus/fundamentum", tag = "v1.0.0", subdirectory = "python/fundamentum_evals" }
 ```
 
 Con pip (Iterum, Agent Runtime):
-`fundamentum-adk @ git+https://github.com/Metuendus/fundamentum@v0.4.0#subdirectory=python/fundamentum_adk`
+`fundamentum-adk @ git+https://github.com/Metuendus/fundamentum@v1.0.0#subdirectory=python/fundamentum_adk`
 y lo mismo para `fundamentum-modelos`.
 
 Para subir de versión se cambian juntas la versión y las etiquetas, y se corre `uv lock`.
@@ -86,7 +94,33 @@ registro.registrar_evento(
 registro.sumar_gasto(uid, r.costo_usd())
 ```
 
-## 4. Analítica
+## 4. Guardrails
+
+Se registran una vez en el `App`, junto con `analitica`:
+
+```python
+from fundamentum_adk import PluginAlcance, PluginPresupuesto, analitica, instalar_filtro
+
+instalar_filtro()  # nada de datos personales en los logs
+plugins = [
+    PluginAlcance(
+        requeridas=("uid", "trip_id"), vinculos={"trip_id": "trip_id"}, verificar=es_miembro
+    ),
+    PluginPresupuesto(agotado=registro_agotado, clave_recurso="trip_id"),
+    *analitica("iterum"),
+]
+app = App(name="iterum", root_agent=root_agent, plugins=plugins)
+```
+
+El texto externo entra al prompt con `como_dato(texto, "correo")`.
+
+## 4b. Evals con gate de costo y latencia
+
+`python -m fundamentum_evals <módulo> <carpeta> --runs 2 --linea-base evals/linea_base.json`. La
+primera vez, y cuando un aumento sea a propósito, se agrega `--actualizar` y la línea base se revisa
+en el PR. Plantilla: `plantillas/cloudbuild-evals.yaml`.
+
+## 4c. Analítica
 
 `analitica(app)` devuelve el plugin oficial de ADK con la configuración privada del chasis: sin
 texto de la conversación y sin estado de la sesión (ver `medicion.md`). Lee
@@ -97,7 +131,7 @@ agente necesita `roles/cloudtrace.agent`; los permisos de BigQuery los da el mó
 
 ```hcl
 module "medicion" {
-  source            = "git::https://github.com/Metuendus/fundamentum.git//infra/modulos/medicion?ref=v0.4.0"
+  source            = "git::https://github.com/Metuendus/fundamentum.git//infra/modulos/medicion?ref=v1.0.0"
   project_id        = var.project_id
   escritores        = ["serviceAccount:${google_service_account.agentes.email}"]
   usuarios_internos = var.usuarios_internos
@@ -111,8 +145,7 @@ Ver [`medicion.md`](medicion.md#resultado_entregado).
 
 ## Estado por app
 
-Desarrollo de funcionalidades en pausa hasta Fundamentum 1.0 (backend: IA y medición, eventos y
-Despachador, guardrails y evals). Al reanudar:
+Fundamentum 1.0 (backend) está listo. Cada app lo adopta completo antes de cualquier rebanada nueva:
 
 | App | Adopción |
 |---|---|

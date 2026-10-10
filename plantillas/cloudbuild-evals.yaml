@@ -1,0 +1,26 @@
+# Plantilla de evals con modelo real para el repo de una app (copiar y ajustar los <…>).
+# Calidad: la decide adk eval con el test_config.json de cada conjunto. Costo y latencia: el gate
+# de fundamentum_evals contra evals/linea_base.json (falla si una versión pasa del doble).
+# Cuando un aumento de costo es a propósito, se corre con --actualizar y la línea base nueva se
+# revisa en el mismo PR.
+serviceAccount: projects/<PROYECTO>/serviceAccounts/<APP>-evals@<PROYECTO>.iam.gserviceaccount.com
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1800s
+
+steps:
+  - id: evals
+    name: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    entrypoint: bash
+    env:
+      - GOOGLE_GENAI_USE_VERTEXAI=true
+      - GOOGLE_CLOUD_PROJECT=<PROYECTO>
+      - GOOGLE_CLOUD_LOCATION=global
+    args:
+      - -ceu
+      - |
+        uv sync --all-packages --frozen
+        uv run python -m fundamentum_evals <módulo con agent.root_agent> <carpeta de *.test.json> \
+          --runs 2 --linea-base evals/linea_base.json

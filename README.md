@@ -9,12 +9,13 @@ evaluaciones y el design system. Cada app conserva sus agentes, su dominio y su 
 
 | Pieza | Paquete | Estado |
 |---|---|---|
-| Registro tarea→modelo, precios, costo (también como SQL) | `python/fundamentum_modelos` | 0.4.0 · fase A |
-| Llamadas de una vuelta, analítica, modelos ADK (Gemini y Claude), resultados | `python/fundamentum_adk` | 0.4.0 · fase A |
+| Registro tarea→modelo, precios, costo (también como SQL) | `python/fundamentum_modelos` | 1.0.0 · fase A |
+| Llamadas de una vuelta, analítica, modelos ADK (Gemini y Claude), resultados | `python/fundamentum_adk` | 1.0.0 · fase A |
 | Medición nativa: dataset del plugin de ADK y vistas de costo | `infra/modulos/medicion` | 0.2.0 · fase A |
 | Proyecto propio: Artifact Registry y publicación | `infra/proyecto` | fase A |
-| Esquemas base de eventos y propuestas, Despachador, registro de Firestore | `python/fundamentum_eventos` | 0.4.0 · fase B |
-| Runner de evals con gates de costo y latencia | `python/fundamentum_evals` | fase D |
+| Esquemas base de eventos y propuestas, Despachador, registro de Firestore | `python/fundamentum_eventos` | 1.0.0 · fase B |
+| Guardrails (alcance, presupuesto, datos como datos, datos personales) | `python/fundamentum_adk` | 1.0.0 · fase D |
+| Runner de evals con gate de costo y latencia | `python/fundamentum_evals` | 1.0.0 · fase D |
 | Tokens (base MiniMax + temas) y UI | `ts/` | fase E |
 
 Plan completo y razones: [`docs/plan.md`](docs/plan.md). Contrato de medición:

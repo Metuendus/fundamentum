@@ -1,5 +1,23 @@
 # Cambios
 
+## 1.0.0 · 2026-10-10 · backend completo
+
+Con esta versión se reanudan las apps: cada una adopta el chasis completo antes de cualquier
+rebanada nueva.
+
+- **Guardrails como Plugins** (`fundamentum-adk`, fase D):
+  - `PluginAlcance`: antes de cada herramienta exige la identidad en la sesión, bloquea argumentos
+    que nombren otro recurso y pregunta a la app por la pertenencia (iterum#75).
+  - `PluginPresupuesto`: corta antes del modelo, con un mensaje claro, si la persona o el recurso
+    agotó su tope.
+  - `como_dato`: delimita el texto externo y neutraliza cierres falsos.
+  - `redactar`, `FiltroDatosPersonales` e `instalar_filtro`: nada de datos personales en los logs
+    (iterum#78).
+- **`fundamentum-evals`:** corre `adk eval` y aplica un gate que falla si `token_usage_v1`,
+  `inference_call_count_v1` o `invocation_duration_v1` pasan del doble de la línea base del repo.
+  Plantilla en `plantillas/cloudbuild-evals.yaml`.
+- Los cuatro paquetes van en 1.0.0. Las versiones 0.3 y 0.4 quedan como historia y no se etiquetan.
+
 ## 0.4.0 · 2026-10-10
 
 - **`fundamentum-eventos` (fase B):**
