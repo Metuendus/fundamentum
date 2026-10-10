@@ -12,15 +12,16 @@ Artifact Registry, credenciales ni pasos extra en CI ni en Agent Runtime.
 ```toml
 # pyproject.toml del paquete de agentes
 [project]
-dependencies = ["fundamentum-adk==0.3.0", "fundamentum-modelos==0.3.0"]
+dependencies = ["fundamentum-adk==0.4.0", "fundamentum-modelos==0.4.0", "fundamentum-eventos[firestore]==0.4.0"]
 
 [tool.uv.sources]
-fundamentum-adk = { git = "https://github.com/Metuendus/fundamentum", tag = "v0.3.0", subdirectory = "python/fundamentum_adk" }
-fundamentum-modelos = { git = "https://github.com/Metuendus/fundamentum", tag = "v0.3.0", subdirectory = "python/fundamentum_modelos" }
+fundamentum-adk = { git = "https://github.com/Metuendus/fundamentum", tag = "v0.4.0", subdirectory = "python/fundamentum_adk" }
+fundamentum-modelos = { git = "https://github.com/Metuendus/fundamentum", tag = "v0.4.0", subdirectory = "python/fundamentum_modelos" }
+fundamentum-eventos = { git = "https://github.com/Metuendus/fundamentum", tag = "v0.4.0", subdirectory = "python/fundamentum_eventos" }
 ```
 
 Con pip (Iterum, Agent Runtime):
-`fundamentum-adk @ git+https://github.com/Metuendus/fundamentum@v0.3.0#subdirectory=python/fundamentum_adk`
+`fundamentum-adk @ git+https://github.com/Metuendus/fundamentum@v0.4.0#subdirectory=python/fundamentum_adk`
 y lo mismo para `fundamentum-modelos`.
 
 Para subir de versión se cambian juntas la versión y las etiquetas, y se corre `uv lock`.
@@ -52,18 +53,51 @@ la llamada quede medida.
 
 Nada de `genai.Client(...).models.generate_content`.
 
-## 3. Analítica
+## 3. Eventos, propuestas y Despachador
+
+```python
+# packages/schemas de la app: extender, no copiar
+from fundamentum_eventos import EventoBase, EventoBusBase, PropuestaBase
+
+
+class EventoBus(EventoBusBase):
+    tipo: TipoEvento  # Literal de la app
+    payload: dict = {}
+
+
+class Evento(EventoBase):
+    componente: Componente | None = None
+    creado_en: datetime
+
+
+# agents/: el Despachador común con los tipos que consumen modelo
+from fundamentum_eventos import Despachador
+from fundamentum_eventos.registro_firestore import RegistroFirestore
+
+DESPACHADOR = Despachador(EventoBus, consumen_presupuesto={...}, consumen_global={...})
+evento = DESPACHADOR.decodificar_push(cuerpo)
+if DESPACHADOR.decidir(evento, "scriba", registro).decision == "procesar":
+    ...
+
+# Tras una llamada al modelo
+registro.registrar_evento(
+    uid, Evento(tipo="llamada_modelo", componente="scriba", creado_en=ahora, **Evento.de_llamada(r))
+)
+registro.sumar_gasto(uid, r.costo_usd())
+```
+
+## 4. Analítica
 
 `analitica(app)` devuelve el plugin oficial de ADK con la configuración privada del chasis: sin
 texto de la conversación y sin estado de la sesión (ver `medicion.md`). Lee
 `<APP>_ANALITICA_DATASET` y `GOOGLE_CLOUD_PROJECT`, o los recibe como argumentos. La cuenta del
 agente necesita `roles/cloudtrace.agent`; los permisos de BigQuery los da el módulo.
 
-## 4. Módulo de Terraform
+## 5. Módulo de Terraform
 
 ```hcl
 module "medicion" {
-  source            = "git::https://github.com/Metuendus/fundamentum.git//infra/modulos/medicion?ref=v0.3.0"
+  source            = "git::https://github.com/Metuendus/fundamentum.git//infra/modulos/medicion?ref=v0.4.0"
   project_id        = var.project_id
   escritores        = ["serviceAccount:${google_service_account.agentes.email}"]
   usuarios_internos = var.usuarios_internos
@@ -71,7 +105,7 @@ module "medicion" {
 }
 ```
 
-## 5. Resultado entregado
+## 6. Resultado entregado
 
 Ver [`medicion.md`](medicion.md#resultado_entregado).
 
@@ -83,5 +117,5 @@ Despachador, guardrails y evals). Al reanudar:
 | App | Adopción |
 |---|---|
 | Iterum | El lector (`documents.py`) y `analitica` desde el chasis; Python 3.11 ya es compatible |
-| Vocatio | Memoria y Scriba con `agente_unico` y `llamar_sync`; `Evento` y Despachador del chasis (0.4) |
-| Domi | Iudex nace con `agente_unico`; Despachador del chasis (0.4) |
+| Vocatio | Memoria y Scriba con `agente_unico` y `llamar_sync`; `Evento`, `Propuesta` y Despachador de `fundamentum_eventos` |
+| Domi | Iudex nace con `agente_unico`; Despachador de `fundamentum_eventos` (`consumen_global` para Interpres y Vicinus) |

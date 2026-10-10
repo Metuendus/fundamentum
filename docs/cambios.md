@@ -1,5 +1,18 @@
 # Cambios
 
+## 0.4.0 · 2026-10-10
+
+- **`fundamentum-eventos` (fase B):**
+  - Esquemas base que cada app extiende en su `packages/schemas`: `EventoBusBase`, `EventoBase`
+    (con `UsoModelo` y `de_llamada`), `PropuestaBase`, `ClasePropuesta` y `EstadoPropuesta`.
+  - `Despachador`, que une los de Vocatio y Domi: idempotencia por `evento_id + componente`,
+    presupuesto por usuario y tope global para eventos de sistema. Falla en voz alta si hay tipos
+    con tope global y el registro no lo implementa.
+  - `RegistroFirestore` (extra `firestore`): reclamación atómica, presupuestos, bitácora y
+    propuestas. Las colecciones se pueden configurar.
+  - `con_reintentos` para servicios. Los modelos los reintenta ADK.
+- `fundamentum-adk` y `fundamentum-modelos` suben a 0.4.0, sin cambios de API.
+
 ## 0.3.0 · 2026-10-10
 
 - `fundamentum-adk`:

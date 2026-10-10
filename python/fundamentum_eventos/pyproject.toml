@@ -1,0 +1,16 @@
+[project]
+name = "fundamentum-eventos"
+version = "0.4.0"
+description = "Eventos, propuestas y Despachador comunes: esquemas base, idempotencia y presupuesto."
+requires-python = ">=3.11,<3.13"
+dependencies = ["pydantic>=2.9"]
+
+[project.optional-dependencies]
+firestore = ["google-cloud-firestore>=2.19"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["fundamentum_eventos"]
