@@ -16,6 +16,10 @@ rebanada nueva.
 - **`fundamentum-evals`:** corre `adk eval` y aplica un gate que falla si `token_usage_v1`,
   `inference_call_count_v1` o `invocation_duration_v1` pasan del doble de la línea base del repo.
   Plantilla en `plantillas/cloudbuild-evals.yaml`.
+- `infra/modulos/medicion`: las vistas `resultados` y `costo_por_resultado` se activan aparte, con
+  `crear_vistas_resultados = true`, porque el sink crea su tabla hasta el primer
+  `resultado_entregado` y BigQuery rechaza una vista sobre un comodín sin tablas (lo encontró el primer
+  `apply` de Iterum).
 - Los cuatro paquetes van en 1.0.0. Las versiones 0.3 y 0.4 quedan como historia y no se etiquetan.
 
 ## 0.4.0 · 2026-10-10

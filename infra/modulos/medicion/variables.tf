@@ -37,3 +37,9 @@ variable "usuarios_internos" {
   default     = []
   description = "uids del fundador y del equipo; las vistas los excluyen de costo y resultados."
 }
+
+variable "crear_vistas_resultados" {
+  type        = bool
+  default     = false
+  description = "Activar cuando la app ya emitió su primer resultado_entregado (el sink crea su tabla entonces)."
+}

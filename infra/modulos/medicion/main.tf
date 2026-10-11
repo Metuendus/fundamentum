@@ -66,8 +66,10 @@ resource "google_bigquery_dataset_iam_member" "sink" {
 
 # ─── Vistas de costo ─────────────────────────────────────────────────────────
 #
-# Leen `agent_events` (lo crea el plugin con la primera llamada) y las tablas del sink (con el
-# primer resultado). Por eso se crean en un segundo `apply` con `crear_vistas = true`.
+# Las de costo leen `agent_events`, que el plugin crea con la primera llamada a un modelo: se activan
+# con `crear_vistas = true` en un segundo `apply`. Las de resultados leen las tablas que el sink crea
+# con el primer `resultado_entregado`, que puede llegar mucho después: van aparte, con
+# `crear_vistas_resultados = true`. BigQuery rechaza una vista sobre un comodín sin tablas.
 
 locals {
   plantilla = {
@@ -113,7 +115,7 @@ resource "google_bigquery_table" "costo_diario" {
 }
 
 resource "google_bigquery_table" "resultados" {
-  count = var.crear_vistas ? 1 : 0
+  count = var.crear_vistas && var.crear_vistas_resultados ? 1 : 0
 
   project             = var.project_id
   dataset_id          = google_bigquery_dataset.agentes.dataset_id
@@ -129,7 +131,7 @@ resource "google_bigquery_table" "resultados" {
 }
 
 resource "google_bigquery_table" "costo_por_resultado" {
-  count = var.crear_vistas ? 1 : 0
+  count = var.crear_vistas && var.crear_vistas_resultados ? 1 : 0
 
   project             = var.project_id
   dataset_id          = google_bigquery_dataset.agentes.dataset_id

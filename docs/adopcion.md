@@ -136,6 +136,8 @@ module "medicion" {
   escritores        = ["serviceAccount:${google_service_account.agentes.email}"]
   usuarios_internos = var.usuarios_internos
   crear_vistas      = var.medicion_vistas # true en un segundo apply, tras la primera llamada
+  # true cuando la app ya emitió su primer resultado_entregado (el sink crea la tabla entonces)
+  crear_vistas_resultados = var.medicion_resultados
 }
 ```
 
