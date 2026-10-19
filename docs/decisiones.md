@@ -36,3 +36,17 @@ cuando el número sostiene un precio de venta.
 Runtime reserva. ADK advierte que `output_schema` con herramientas es confiable en Gemini 3; en
 otros modelos cae a `set_model_response`. Por eso Claude se evalúa primero en tareas sin
 herramientas.
+
+## 4. Núcleo público, firma privada (2026-10-19)
+
+El fundador pivoteó a una firma de service-as-software que construye, opera y mantiene sistemas de IA para
+agencias y equipos de marketing, con SLA. Fundamentum pasa a ser la base de su plataforma interna.
+
+- **El chasis sigue público y genérico**, ahora con licencia Apache-2.0. Lo de marketing (conectores de Google
+  Ads, Meta y GA4), lo de cada cliente y la operación (runbooks, reportes de SLA) viven en un repo privado
+  encima de él.
+- **Qué entra:** lo que usan dos consumidores (apps o plataforma de la firma) o lo que es estándar obligatorio.
+- **Canarios:** Iterum y Domi adoptan cada versión primero; la firma fija la versión solo después de que pasen
+  sus pruebas y evals. Vocatio se suma si adopta el chasis.
+- **Candidatas para cuando un cliente real las pida:** costo, presupuesto y vistas por cliente (además de por
+  usuario); SLO y alertas de disponibilidad y frescura por pipeline; datos para el reporte mensual de SLA.

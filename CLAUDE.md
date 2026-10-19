@@ -1,8 +1,8 @@
 # Fundamentum · reglas del proyecto
 
-Chasis compartido de Iterum, Vocatio y Domi. Lee `README.md` y `docs/` antes de trabajar. Lo que se
-cambia aquí lo heredan tres apps: cada cambio es una versión nueva, con pruebas y nota en
-`docs/cambios.md`.
+Chasis compartido de las apps (Iterum, Vocatio, Domi) y de la plataforma privada de la firma. Lee `README.md`
+y `docs/` antes de trabajar. Lo que se cambia aquí lo heredan todos sus consumidores: cada cambio es una
+versión nueva, con pruebas y nota en `docs/cambios.md`. Repo público con licencia Apache-2.0.
 
 ## Reglas
 
@@ -18,7 +18,10 @@ cambia aquí lo heredan tres apps: cada cambio es una versión nueva, con prueba
   promocional.
 - **La medición nunca rompe una conversación.** Un error al medir se registra y la llamada sigue.
 - **No usar la familia Gemini 2.5** (retirada el 16 de octubre de 2026).
-- Entra solo lo que usan dos apps o lo que es estándar obligatorio. Nada específico de un dominio.
+- Entra solo lo que usan dos consumidores (apps o la plataforma de la firma) o lo que es estándar obligatorio.
+  Nada específico de un dominio: lo de marketing o de un cliente va en el repo privado de la firma.
+- **Canarios primero.** Una versión nueva se adopta en Iterum y Domi, y pasa sus pruebas y evals, antes de que
+  la plataforma de la firma la fije.
 - Python 3.12 con uv. Español en código, docs y commits, como en las apps.
 
 ## Verificar

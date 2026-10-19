@@ -1,5 +1,11 @@
 # Cambios
 
+## Sin versión · 2026-10-19
+
+- Licencia Apache-2.0 (`LICENSE`).
+- Nuevo rol: chasis de las apps y de la plataforma privada de la firma; las apps son canarios. Ver
+  `docs/decisiones.md`, decisión 4. Sin cambios de código.
+
 ## 1.0.0 · 2026-10-10 · backend completo
 
 Con esta versión se reanudan las apps: cada una adopta el chasis completo antes de cualquier

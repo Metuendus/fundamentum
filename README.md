@@ -1,7 +1,8 @@
 # Fundamentum
 
-Chasis compartido de **Iterum**, **Vocatio** y **Domi**. Como en la industria automotriz: un chasis
-estándar y, encima, varios modelos que no se ven iguales. Aquí vive lo que todas las apps necesitan
+Chasis compartido de las apps **Iterum**, **Vocatio** y **Domi** y de la plataforma privada de una firma que
+opera sistemas de IA para equipos de marketing. Como en la industria automotriz: un chasis estándar y, encima,
+varios modelos que no se ven iguales. Aquí vive lo que todas las apps necesitan
 y no las diferencia: la capa de modelos, la forma de usar ADK, la medición, los eventos, las
 evaluaciones y el design system. Cada app conserva sus agentes, su dominio y su marca.
 
@@ -20,6 +21,14 @@ evaluaciones y el design system. Cada app conserva sus agentes, su dominio y su 
 
 Plan completo y razones: [`docs/plan.md`](docs/plan.md). Contrato de medición:
 [`docs/medicion.md`](docs/medicion.md). Cómo lo adopta cada app: [`docs/adopcion.md`](docs/adopcion.md).
+
+## Quién lo usa
+
+- **Las apps** (uso personal, canarios y portafolio): toda versión nueva se adopta primero en Iterum y Domi,
+  y pasa sus pruebas y evals antes de llegar a la firma.
+- **La plataforma de la firma** (repo privado): agrega lo que es de marketing o de un cliente, nunca aquí.
+
+Licencia: [Apache-2.0](LICENSE).
 
 ## Desarrollo
 
