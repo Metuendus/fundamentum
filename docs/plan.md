@@ -1,5 +1,78 @@
 # Plan · Fundamentum: chasis compartido para Iterum, Vocatio y Domi
 
+## Estado al 2026-10-20 y siguiente paso
+
+El plan original sigue abajo, sin cambios. Esta sección dice qué se hizo, qué cambió respecto al
+plan y qué sigue.
+
+### Fases
+| Fase | Estado |
+| --- | --- |
+| A · Medir | **Hecha** (1.0.0). Medición nativa de ADK (`analitica`) y vistas de costo en `infra/modulos/medicion`. Se dejó el plugin propio (decisión 1) |
+| B · Eventos y Despachador | **Hecha** (1.0.0). `fundamentum_eventos` con esquemas base, `Despachador` y `RegistroFirestore` |
+| D · Guardrails y evals | **Hecha** (1.0.0). Se adelantó antes del RC de Iterum por la decisión del 10 de octubre: primero el backend del chasis y las apps en pausa |
+| C · Vocatio a ADK | **Pendiente.** Es el siguiente paso (ver abajo) |
+| E · Design system único | Pendiente (#3). Primero se rehacen los temas en Claude Design; código después del RC de Iterum |
+| F · Paquete para Alex | Pendiente (#4). Al cerrar la ronda 1 de Iterum y la beta de Vocatio |
+
+Etiqueta vigente: **`v1.0.0` = `ca6254a`**. Las apps instalan desde git fijado por etiqueta, no
+desde Artifact Registry: #5 queda solo como canal de publicación opcional.
+
+### Adopción por app
+| App | Estado | Siguiente paso |
+| --- | --- | --- |
+| **Domi** | **Completa.** A0 (domi#7) y F2.2 Iudex (domi#9) en `main`, probados en `domi-mx`: `agente_unico`, `analitica`, `PluginPresupuesto`, `como_dato`, `Despachador`, esquemas base, `Registro`, módulo de medición y evals | F2.2b (API de la web) |
+| **Iterum** | **Parcial.** Medición nativa en producción con su propia `analitica` (iterum#102, #104, #105) y módulo de medición `v1.0.0`; el lector ya corre por ADK. **No importa el chasis en Python** | Dependencias del chasis; `analitica` y lector a `fundamentum_adk`; guardrails #75, #78 y #77 sobre los plugins; gate de evals (#83). Detalle en su `docs/04-roadmap.md` (PR iterum#106) |
+| **Vocatio** | **Sin adoptar.** Dependencias fijas en vocatio#45 (abierto). Memoria y Scriba llaman a Gemini con `genai.Client`, fuera de ADK | Fase C: fusionar #45; Memoria y Scriba con `agente_unico`/`llamar_sync` (#44); `fundamentum_eventos` y módulo de medición (cierra #43) |
+
+### Qué cambió respecto al plan original
+1. **Medición nativa** con el plugin oficial `BigQueryAgentAnalyticsPlugin`, sin texto ni estado de
+   sesión, más vistas SQL de costo, en lugar de un plugin propio (decisión 1, `docs/medicion.md`).
+2. **Instalación por git** fijado por etiqueta, no por Artifact Registry: repo público, sin
+   credenciales en CI ni en Agent Runtime.
+3. **Pausa de las apps** del 10 al 11 de octubre, hasta tener el backend del chasis (A, B y D), para no
+   refactorizar dos veces. Excepción: el canario de Iterum.
+4. **Las vistas de resultados se activan aparte** (`crear_vistas_resultados`), porque el sink crea su
+   tabla hasta el primer `resultado_entregado`.
+
+### Lecciones de la adopción en Domi: candidatas para 1.1
+Entran al chasis cuando las use una segunda app (regla del repo). Hoy viven en Domi:
+1. **TTL de Firestore:** `RegistroFirestore` guarda las fechas como texto ISO, y el TTL solo actúa
+   sobre Timestamp nativo. Domi lo resuelve con `AlmacenFirestore.fijar_borrado`
+   (`domi/agents/domi_agents/almacen.py`). Sirve para cualquier propuesta con TTL.
+2. **Trazas en Cloud Run:**
+   - `analitica` pide `GOOGLE_CLOUD_PROJECT` y Cloud Run no lo define;
+   - el exportador OTLP de ADK necesita `gcp.project_id` en el recurso o responde 400 (`get_gcp_resource`);
+   - con CPU solo durante la petición hay que vaciar las trazas en cada push (`force_flush`);
+   - el plugin de BigQuery escribe en segundo plano, así que el servicio va con `--no-cpu-throttling`.
+   Referencia: `domi/services/agentes/domi_servicio_agentes/contexto.py`. Buen candidato para un
+   `fundamentum_adk.cloud_run`.
+3. **Publicador de Pub/Sub** con `tipo` como atributo (`contexto.publicador`). Vocatio lo va a
+   necesitar.
+4. **Evals de una sola vuelta:** criterios deterministas más `eficiencia.comparar`
+   (`domi/agents/evals/iudex/correr.py`), sin `adk eval`. Problema: picos de latencia de 50–130 s en
+   alrededor de 1 de cada 10 llamadas (reintentos ante 429) tumban el gate de duración. Conviene
+   comparar la mediana o un percentil, no el promedio.
+5. **Imagen de Cloud Run con uv:** la imagen slim no trae `git` (lo piden las dependencias del
+   chasis), y el venv debe construirse en la misma ruta de la imagen final. Conviene una
+   plantilla de Dockerfile en `plantillas/`.
+6. **`plantillas/cloudbuild-evals.yaml`** fija `serviceAccount` a una cuenta del agente que no
+   puede leer el bucket de fuentes de Cloud Build. Domi lo quitó y corre con la cuenta por defecto.
+
+### Siguiente paso
+1. **Vocatio, fase C:** fusionar vocatio#45 y migrar Memoria y Scriba a `agente_unico`. Es la segunda
+   app que necesita las lecciones 2, 3 y 5.
+2. **Fundamentum 1.1** con las lecciones que use Vocatio, cada una con pruebas y nota en
+   `docs/cambios.md`; después, subir la etiqueta en las tres apps.
+3. **Iterum:** adopción en Python, en el orden de su roadmap.
+4. **E y F** cuando el RC de Iterum y la beta de Vocatio lo permitan.
+
+PRs abiertos en este repo: solo el que agrega esta sección. Issues abiertos: #3 (E), #4 (F) y #5
+(Artifact Registry, ahora opcional).
+
+---
+
+
 ## Contexto
 
 Tres PoC agent-native (Iterum, Vocatio, Domi) validan el desarrollo agent-native y el modelo AaaS.
