@@ -567,7 +567,7 @@ dev = [
 
 [[package]]
 name = "fundamentum-adk"
-version = "1.0.0"
+version = "1.1.0"
 source = { editable = "python/fundamentum_adk" }
 dependencies = [
     { name = "fundamentum-modelos" },
@@ -589,7 +589,7 @@ provides-extras = ["claude"]
 
 [[package]]
 name = "fundamentum-evals"
-version = "1.0.0"
+version = "1.1.0"
 source = { editable = "python/fundamentum_evals" }
 dependencies = [
     { name = "google-adk", extra = ["eval"] },
@@ -600,7 +600,7 @@ requires-dist = [{ name = "google-adk", extras = ["eval"], specifier = ">=2.10,<
 
 [[package]]
 name = "fundamentum-eventos"
-version = "1.0.0"
+version = "1.1.0"
 source = { editable = "python/fundamentum_eventos" }
 dependencies = [
     { name = "pydantic" },
@@ -620,7 +620,7 @@ provides-extras = ["firestore"]
 
 [[package]]
 name = "fundamentum-modelos"
-version = "1.0.0"
+version = "1.1.0"
 source = { editable = "python/fundamentum_modelos" }
 
 [[package]]

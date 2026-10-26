@@ -1,5 +1,14 @@
 # Cambios
 
+## 1.1.0 · 2026-10-26 · tope por intento a Gemini
+
+- `modelo_adk` devuelve `GeminiConEspera`: cada intento lleva un tope de `ESPERA_MS` (90 s), también
+  en el servidor por `X-Server-Timeout`, y un corte antes de la primera respuesta se reintenta hasta
+  `INTENTOS_ESPERA` (3) veces. google-genai no reintenta el corte de aiohttp por su cuenta.
+- Por qué: en Iterum una llamada a `gemini-3.8-flash` tardó 7,6 min y el turno se perdió (iterum#127).
+- Una petición que ya trae su propio `http_options.timeout` lo conserva.
+- Los cuatro paquetes van en 1.1.0, porque la etiqueta y las versiones deben coincidir para publicar.
+
 ## 1.0.0 · 2026-10-10 · backend completo
 
 Con esta versión se reanudan las apps: cada una adopta el chasis completo antes de cualquier
