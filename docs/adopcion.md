@@ -59,6 +59,23 @@ r.texto, r.uso, r.costo_usd()  # el costo va al Evento y al presupuesto del Desp
 `llamar` (async) es lo mismo dentro de una herramienta. Ahí se pasan los plugins del `App`, para que
 la llamada quede medida.
 
+Para una conversación con herramientas e historial servida desde la app (un endpoint SSE en Cloud
+Run, fuera de Agent Runtime), `Conversacion`:
+
+```python
+from fundamentum_adk import Conversacion, Fin, Trozo
+
+chat = Conversacion(agente_con_herramientas, plugins=PLUGINS, app="domi")  # una por proceso
+async for e in chat.conversar(texto, usuario=uid, sesion_id=sid, estado={"uid": uid}):
+    if isinstance(e, Trozo):
+        ...  # al cliente, tal cual llega
+    elif isinstance(e, Fin):
+        e.uso, e.costo_usd()  # al Evento y al presupuesto
+```
+
+La identidad va en `estado`, que pone el servidor y se reescribe en cada turno; nunca sale del
+mensaje. Los plugins de la app no se cierran al terminar.
+
 Nada de `genai.Client(...).models.generate_content`.
 
 ## 3. Eventos, propuestas y Despachador

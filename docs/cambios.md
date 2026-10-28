@@ -1,5 +1,20 @@
 # Cambios
 
+## 1.2.0 · 2026-10-28 · conversación en flujo
+
+- `Conversacion` (`fundamentum-adk`): un agente con herramientas e historial sobre un `Runner` propio,
+  para servir un chat desde la app (SSE en Cloud Run). `conversar(...)` es un generador async que
+  entrega `Trozo` (texto en flujo, o entero si el modelo no hace flujo o responde un plugin),
+  `LlamadaHerramienta`, `RespuestaHerramienta` y al final `Fin` con texto, uso por respuesta, costo,
+  latencia e id de sesión.
+- La identidad la fija el servidor en `estado`: crea la sesión con ella y la reescribe antes de cada
+  turno (`state_delta`). Las sesiones son por usuario; con el id de otra persona no se ve su
+  historial. `SesionAjena` si el servicio de sesiones rechaza el id.
+- Comparte los plugins de la app sin cerrarlos, como `llamar`: `PluginAlcance`, `PluginPresupuesto`
+  y `analitica` alcanzan cada turno.
+- Por qué: Domi #29 (chat real en la hoja de Domi). Iterum corre en Agent Runtime y no lo necesita.
+- Los cuatro paquetes van en 1.2.0.
+
 ## 1.1.0 · 2026-10-26 · tope por intento a Gemini
 
 - `modelo_adk` devuelve `GeminiConEspera`: cada intento lleva un tope de `ESPERA_MS` (90 s), también
