@@ -1,0 +1,233 @@
+.pagina {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 8px 24px;
+  border-bottom: 1px solid var(--at-line);
+  padding-bottom: 16px;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+
+.sub {
+  margin: 0;
+  color: var(--at-muted);
+}
+
+.seccion {
+  margin-top: 40px;
+}
+
+.seccion h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+.bloque h3 {
+  font-size: 15px;
+  margin: 24px 0 8px;
+}
+
+.ayuda {
+  color: var(--at-muted);
+  margin: 4px 0 12px;
+}
+
+.tabla {
+  overflow-x: auto;
+  border: 1px solid var(--at-line);
+  border-radius: 8px;
+}
+
+.tabla table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla th,
+.tabla td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--at-line);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.tabla thead th {
+  background: var(--at-surface);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--at-muted);
+}
+
+.tabla tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.tabla tbody th {
+  font-weight: 500;
+}
+
+.primario {
+  background: var(--at-brand);
+  border-color: var(--at-brand);
+  color: var(--at-on-brand);
+}
+
+.primario:hover {
+  background: var(--at-brand);
+  filter: brightness(1.08);
+}
+
+.segmentado {
+  display: inline-flex;
+}
+
+.segmentado button:first-of-type {
+  border-radius: 8px 0 0 8px;
+}
+
+.segmentado button:last-of-type {
+  border-radius: 0 8px 8px 0;
+  margin-left: -1px;
+}
+
+.activo {
+  background: var(--at-ink);
+  border-color: var(--at-ink);
+  color: var(--at-canvas);
+}
+
+.activo:hover {
+  background: var(--at-ink);
+}
+
+.lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.tarjeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--at-line);
+  border-radius: 8px;
+}
+
+.motivo {
+  margin: 4px 0 0;
+  color: var(--at-muted);
+}
+
+.acciones {
+  display: flex;
+  gap: 8px;
+}
+
+.alta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  margin: 12px 0 16px;
+}
+
+.alta label {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--at-muted);
+}
+
+.alta input:not([type="checkbox"]) {
+  min-height: 44px;
+  min-width: 240px;
+  padding: 0 12px;
+  border: 1px solid var(--at-line);
+  border-radius: 8px;
+  background: var(--at-canvas);
+  color: var(--at-ink);
+  font: inherit;
+}
+
+.alta fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 4px 12px;
+  flex-wrap: wrap;
+}
+
+.alta legend {
+  font-size: 13px;
+  color: var(--at-muted);
+  margin-bottom: 4px;
+}
+
+.alta .casilla {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--at-ink);
+  font-size: 15px;
+}
+
+.casilla input {
+  width: 20px;
+  height: 20px;
+}
+
+.permiso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.vacio {
+  color: var(--at-muted);
+}
+
+.ok,
+.fuera {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.ok {
+  background: var(--at-ok-bg);
+  color: var(--at-ok);
+}
+
+.fuera {
+  background: var(--at-warn-bg);
+  color: var(--at-warn);
+}
+
+.alerta {
+  color: var(--at-warn);
+}

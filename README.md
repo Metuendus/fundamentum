@@ -17,6 +17,7 @@ evaluaciones y el design system. Cada app conserva sus agentes, su dominio y su 
 | Guardrails (alcance, presupuesto, datos como datos, datos personales) | `python/fundamentum_adk` | 1.0.0 · fase D |
 | Runner de evals con gate de costo y latencia | `python/fundamentum_evals` | 1.0.0 · fase D |
 | Lista de acceso común y portero de Firebase Auth (beta privada) | `python/fundamentum_acceso` | 1.3.0 |
+| Atrium: panel privado de acceso (y luego de uso) de las tres apps | `apps/atrium` | 0.1.0 |
 | Tokens (base MiniMax + temas) y UI | `ts/` | fase E |
 
 Plan completo y razones: [`docs/plan.md`](docs/plan.md). Contrato de medición:
