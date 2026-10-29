@@ -8,7 +8,7 @@ requires-python = ">=3.11,<3.13"
 package = false
 
 [tool.uv.workspace]
-members = ["python/fundamentum_modelos", "python/fundamentum_adk", "python/fundamentum_eventos", "python/fundamentum_evals"]
+members = ["python/fundamentum_modelos", "python/fundamentum_adk", "python/fundamentum_eventos", "python/fundamentum_evals", "python/fundamentum_acceso"]
 
 [dependency-groups]
 dev = ["duckdb>=1.1", "google-cloud-firestore>=2.19", "pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.7", "sqlglot>=25"]
@@ -21,6 +21,7 @@ testpaths = [
   "python/fundamentum_adk/tests",
   "python/fundamentum_eventos/tests",
   "python/fundamentum_evals/tests",
+  "python/fundamentum_acceso/tests",
   "infra/modulos/medicion/tests",
 ]
 

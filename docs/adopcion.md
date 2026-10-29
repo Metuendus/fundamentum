@@ -144,6 +144,19 @@ texto de la conversación y sin estado de la sesión (ver `medicion.md`). Lee
 `<APP>_ANALITICA_DATASET` y `GOOGLE_CLOUD_PROJECT`, o los recibe como argumentos. La cuenta del
 agente necesita `roles/cloudtrace.agent`; los permisos de BigQuery los da el módulo.
 
+## 4d. Acceso en beta privada
+
+Una sola lista decide quién entra a cada app (`fundamentum-acceso`). Pasos por app:
+
+1. Pasar el proyecto a Identity Platform (no tiene vuelta atrás; gratis hasta 50 mil usuarios activos
+   al mes). Sin eso no hay funciones bloqueantes.
+2. Copiar `plantillas/portero/` a `firebase/portero/`, poner `APP` y desplegar las dos funciones.
+3. Dar `roles/datastore.viewer` en `josecarloscorona-web` a la cuenta de las funciones.
+4. Traducir el rechazo en la web: el `message` del error de Auth trae el `Motivo`; `beta_privada` y
+   `pase_vencido` llevan a la pantalla "<App> está en beta privada. Por ahora el acceso es solo por
+   invitación." con Solicitar acceso y Usar otra cuenta.
+5. Salir de beta: `apps/{app}.modo = "abierta"`, sin desplegar nada.
+
 ## 5. Módulo de Terraform
 
 ```hcl

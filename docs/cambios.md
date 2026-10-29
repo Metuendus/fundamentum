@@ -1,5 +1,23 @@
 # Cambios
 
+## 1.3.0 · 2026-10-29 · lista de acceso común
+
+- Paquete nuevo `fundamentum-acceso`: una sola lista de quién entra a cada app mientras está en beta
+  privada, en el Firestore del proyecto central `josecarloscorona-web` (`acceso/{correo}` con un
+  `Permiso` por app, `apps/{app}` con su `Modo` y `solicitudes/{id}`).
+- `decidir(...)` es determinista: en `beta` solo entra quien tiene permiso para esa app y no vencido;
+  en `abierta` entra cualquiera. Google debe traer el correo verificado; con contraseña la app exige
+  la verificación después. Sin documento de la app, cuenta como beta.
+- `crear_portero(app, LectorFirestore.central)` da el manejador de las funciones bloqueantes
+  `beforeUserCreated` y `beforeUserSignedIn` (extra `firebase`). Falla cerrado si no puede leer la
+  lista. El mensaje del rechazo es el `Motivo` (`beta_privada`, `pase_vencido`, …), que la app
+  traduce a su pantalla. Plantilla en `plantillas/portero/`.
+- Quitar a alguien no cierra su sesión abierta (`beforeUserSignedIn` no corre al renovar el token):
+  hay que revocar sus refresh tokens en el proyecto de la app.
+- Por qué: hoy Iterum y Domi dejan entrar a cualquier cuenta de Google y Vocatio filtra con una
+  variable propia. Un portero en Auth cubre la API y las escrituras directas a Firestore de una vez.
+- Los cinco paquetes van en 1.3.0.
+
 ## 1.2.0 · 2026-10-28 · conversación en flujo
 
 - `Conversacion` (`fundamentum-adk`): un agente con herramientas e historial sobre un `Runner` propio,

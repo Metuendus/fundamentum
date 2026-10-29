@@ -1,6 +1,6 @@
 [project]
 name = "fundamentum-adk"
-version = "1.2.0"
+version = "1.3.0"
 description = "Piezas de ADK comunes: llamadas de una vuelta, medición nativa y modelos Gemini y Claude en Model Garden."
 requires-python = ">=3.11,<3.13"
 dependencies = ["fundamentum-modelos>=1,<2", "google-adk[bigquery-analytics]>=2.10,<3"]
