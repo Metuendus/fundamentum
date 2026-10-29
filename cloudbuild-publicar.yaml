@@ -9,7 +9,7 @@ steps:
       - |
         import sys, tomllib
         etiqueta = "${TAG_NAME}".removeprefix("v")
-        for ruta in ["python/fundamentum_modelos/pyproject.toml", "python/fundamentum_adk/pyproject.toml", "python/fundamentum_eventos/pyproject.toml", "python/fundamentum_evals/pyproject.toml"]:
+        for ruta in ["python/fundamentum_modelos/pyproject.toml", "python/fundamentum_adk/pyproject.toml", "python/fundamentum_eventos/pyproject.toml", "python/fundamentum_evals/pyproject.toml", "python/fundamentum_acceso/pyproject.toml"]:
             version = tomllib.load(open(ruta, "rb"))["project"]["version"]
             if version != etiqueta:
                 sys.exit(f"{ruta} dice {version} y la etiqueta {etiqueta}")
@@ -36,6 +36,7 @@ steps:
         uv build --package fundamentum-adk --out-dir dist
         uv build --package fundamentum-eventos --out-dir dist
         uv build --package fundamentum-evals --out-dir dist
+        uv build --package fundamentum-acceso --out-dir dist
         uv publish dist/* \
           --publish-url "https://${_REGION}-python.pkg.dev/${PROJECT_ID}/fundamentum-py/" \
           --username oauth2accesstoken --password "$$(cat /workspace/.token)"

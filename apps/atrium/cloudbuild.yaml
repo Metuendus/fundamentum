@@ -1,0 +1,38 @@
+# Construye y despliega Atrium en el proyecto central (josecarloscorona-web), desde la raíz del repo:
+#   gcloud builds submit --project josecarloscorona-web --config apps/atrium/cloudbuild.yaml apps/atrium \
+#     --substitutions=_ADMINS=tu@correo.com,_IAP_AUDIENCE=/projects/NUMERO/locations/us-central1/services/atrium
+# El servicio va detrás de IAP (sin acceso público); ver apps/atrium/README.md.
+steps:
+  - id: imagen
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/atrium/atrium:${BUILD_ID}", "."]
+
+  - id: subir
+    name: gcr.io/cloud-builders/docker
+    args: ["push", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/atrium/atrium:${BUILD_ID}"]
+
+  - id: desplegar
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - atrium
+      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/atrium/atrium:${BUILD_ID}
+      - --region=${_REGION}
+      - --service-account=atrium@${PROJECT_ID}.iam.gserviceaccount.com
+      - --no-allow-unauthenticated
+      - --iap
+      - --max-instances=2
+      - --update-env-vars=^#^ATRIUM_ADMINS=${_ADMINS}#ATRIUM_IAP_AUDIENCE=${_IAP_AUDIENCE}#ATRIUM_PROYECTO_CENTRAL=${PROJECT_ID}
+
+substitutions:
+  _REGION: us-central1
+  _ADMINS: ""
+  _IAP_AUDIENCE: ""
+
+images:
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/atrium/atrium:${BUILD_ID}
+
+options:
+  logging: CLOUD_LOGGING_ONLY

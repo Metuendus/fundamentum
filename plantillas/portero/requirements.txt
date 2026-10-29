@@ -1,0 +1,1 @@
+fundamentum-acceso[firebase] @ git+https://github.com/Metuendus/fundamentum@v1.3.0#subdirectory=python/fundamentum_acceso

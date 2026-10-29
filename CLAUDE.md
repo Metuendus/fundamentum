@@ -19,6 +19,9 @@ cambia aquí lo heredan tres apps: cada cambio es una versión nueva, con prueba
 - **La medición nunca rompe una conversación.** Un error al medir se registra y la llamada sigue.
 - **No usar la familia Gemini 2.5** (retirada el 16 de octubre de 2026).
 - Entra solo lo que usan dos apps o lo que es estándar obligatorio. Nada específico de un dominio.
+- `apps/` son herramientas del chasis que sirven a las tres apps (hoy Atrium: acceso y uso). Se
+  despliegan desde `main` con su propio Cloud Build, aparte de las releases de los paquetes. El repo
+  es público: ningún secreto ni dato de usuarios en el código.
 - Python 3.12 con uv. Español en código, docs y commits, como en las apps.
 
 ## Verificar
