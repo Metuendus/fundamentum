@@ -203,7 +203,7 @@ await historial.borrar(uid, sid)  # y borrar_usuario(uid) al borrar la cuenta
 ```
 
 En Agent Runtime (Iterum) `PluginResumen` va en `App(plugins=[...])` y el `Historial` lo arma el
-servidor web con `VertexAiSessionService` sobre el motor del Concierge (`app_name` = id del motor).
+servidor web con `sesiones_agent_platform(proyecto, <motor del Concierge>)`. Con el motor fijo, `app_name` es libre (p. ej. `"iterum"`); debe empezar con letra.
 
 Pasos por app:
 
