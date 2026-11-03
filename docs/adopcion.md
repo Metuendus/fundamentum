@@ -218,6 +218,14 @@ Pasos por app:
 Contexto largo: `Conversacion` trae la compactación del chasis (`contexto()`); en un `App` propio,
 `App(..., **contexto())`. La caché de contexto se prende por app solo si las evals lo justifican.
 
+Menos tokens por mensaje (1.4.1):
+
+- `PluginPodar(["leer_viaje"])` deja en el prompt solo la lectura más reciente de cada herramienta
+  que se repite y caduca. La sesión no cambia.
+- `PluginTopeLlamadas(maximo=15)` corta un agente en bucle dentro de un mensaje.
+- Con un agente que lee mucho, conviene bajar el umbral: `contexto(umbral_tokens=20_000,
+  eventos_crudos=12)`. El resumen lo hace ADK con el modelo del agente y cuesta una llamada.
+
 ## 5. Módulo de Terraform
 
 ```hcl

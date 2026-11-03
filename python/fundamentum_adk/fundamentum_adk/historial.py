@@ -86,7 +86,10 @@ class PluginResumen(BasePlugin):
         event.actions.state_delta.update(delta)
         if traza := trace_id_actual():
             event.custom_metadata = {**(event.custom_metadata or {}), "trace_id": traza}
-        return event
+        # Se cambia el evento en su lugar y se devuelve `None`: si se devolviera, ADK dejaría de
+        # llamar el `on_event_callback` de los plugins que siguen (la analítica registra ahí la
+        # respuesta final). El runner guarda este mismo objeto en la sesión.
+        return None
 
     async def after_run_callback(self, *, invocation_context: InvocationContext) -> None:
         self._preguntas.pop(invocation_context.invocation_id, None)
