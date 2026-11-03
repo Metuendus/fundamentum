@@ -1,5 +1,20 @@
 # Cambios
 
+## 1.4.1 · 2026-11-03 · menos tokens por mensaje
+
+- `PluginPodar(herramientas, conservar=1)`: antes de cada llamada al modelo, cambia por un aviso
+  corto las respuestas viejas de lecturas que se repiten (p. ej. `leer_viaje`). Solo cambia el
+  prompt; la sesión y el historial visible no se tocan.
+- `PluginTopeLlamadas(maximo=15)`: a partir de esa llamada al modelo dentro de una invocación,
+  responde `MENSAJE_TOPE` sin llamar al modelo. Es la red para agentes en bucle.
+- `PluginResumen` ya no devuelve el evento: lo cambia en su lugar. Si lo devolvía, ADK dejaba de
+  llamar el `on_event_callback` de los plugins que lo siguen (la analítica registra ahí la
+  respuesta final). Ya no importa dónde vaya en la lista.
+- Por qué: en Iterum el Concierge reenviaba el historial completo. Una sesión pasó de 1,007 a 38,318
+  tokens de entrada en cinco días, con copias repetidas de `leer_viaje`. Un mensaje del 29 de
+  octubre hizo 54 llamadas al modelo (0.34 USD).
+- Los cinco paquetes van en 1.4.1.
+
 ## 1.4.0 · 2026-11-03 · sesiones de Agent Platform, historial visible y trazas
 
 - Sesiones: Agent Platform Sessions es el servicio estándar para conversaciones fuera de Agent
