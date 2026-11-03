@@ -159,42 +159,33 @@ Una sola lista decide quién entra a cada app (`fundamentum-acceso`). Pasos por 
 
 ## 4e. Conversación persistente: sesiones, historial visible y trazas (1.4.0)
 
-Dos capas, cada una con su dueño:
-
-- **Sesión de ADK** (lo que recuerda el agente). En Agent Runtime la da su servicio de sesiones. En
-  Cloud Run, `SesionesFirestore`: sin ella, `Conversacion` olvida todo al escalar a cero.
-- **Historial visible** (lo que ve la persona). `PluginHistorial` lo escribe desde el `Runner` en
-  `historial/{uid}/conversaciones/{id}/mensajes`; la web lo lee directo de Firestore con las reglas de
-  `plantillas/historial/firestore.rules`. El id de la conversación es el de la sesión de ADK.
+Una sola fuente: **Agent Platform Sessions**. En Agent Runtime (Iterum) ya la usa `AdkApp`. En Cloud
+Run (Domi, Vocatio), un motor sin código guarda las sesiones (`plantillas/sesiones/crear_motor.py`,
+una vez por app) y `Conversacion` lo usa con `sesiones_agent_platform`.
 
 ```python
 from fundamentum_adk import (
     Conversacion,
     Historial,
-    PluginHistorial,
-    SesionesFirestore,
+    PluginResumen,
     activar_trazas,
     contexto_entrante,
+    sesiones_agent_platform,
     vaciar,
 )
 
 activar_trazas(proyecto)  # Cloud Run; en Agent Runtime, AdkApp(enable_tracing=True)
-historial = Historial(proyecto=proyecto)
+sesiones = sesiones_agent_platform(proyecto, os.environ["DOMI_SESIONES_MOTOR"])
 chat = Conversacion(
-    agente,
-    plugins=[
-        *plugins,
-        PluginHistorial(
-            historial,
-            agente=agente.name,
-            app="domi",
-            recursos={"perfil_id": "perfil"},
-            enlazar=lambda herramienta, r: [{"tipo": "inmueble", "id": i} for i in ids(r)],
-        ),
-    ],
-    app="domi",
-    sesiones=SesionesFirestore(proyecto=proyecto),
+    agente, plugins=[*plugins, PluginResumen(agente.name)], app="domi", sesiones=sesiones
 )
+historial = Historial(
+    sesiones,
+    app="domi",
+    agente=agente.name,
+    enlazar=lambda herramienta, r: [{"tipo": "inmueble", "id": i} for i in ids(r)],
+)
+
 async for e in chat.conversar(
     texto,
     usuario=uid,
@@ -204,19 +195,24 @@ async for e in chat.conversar(
 ):
     ...
 vaciar()  # al final de la petición, con CPU solo durante la petición
+
+# API de la web
+await historial.listar(uid, filtro={"perfil_id": pid})  # recientes: título, último, fecha
+await historial.mensajes(uid, sid)  # mensajes, filas, enlaces, trace_id
+await historial.borrar(uid, sid)  # y borrar_usuario(uid) al borrar la cuenta
 ```
 
-En Agent Runtime (Iterum) va igual en `App(plugins=[..., PluginHistorial(...)])`; el plugin no
-guarda el cliente de Firestore al serializarse.
+En Agent Runtime (Iterum) `PluginResumen` va en `App(plugins=[...])` y el `Historial` lo arma el
+servidor web con `VertexAiSessionService` sobre el motor del Concierge (`app_name` = id del motor).
 
 Pasos por app:
 
-1. Extra `fundamentum-adk[firestore]`.
-2. Copiar el fragmento de `plantillas/historial/firestore.rules` y probarlo en el emulador.
-3. Módulo `infra/modulos/historial` (TTL en `vence`, 365 días por omisión).
-4. Borrado de cuenta: `Historial.borrar_usuario(uid)` y las sesiones del usuario.
-5. Web: lista de conversaciones recientes, abrir una y continuarla con su `sesion_id`, borrar una
-   (el servidor borra conversación y sesión). Guía de UX en `docs/ux-agentes.md`.
+1. Extra `fundamentum-adk[agentplatform]` y `roles/aiplatform.user` en la cuenta del servicio.
+2. Crear el motor de sesiones (salvo Iterum) y poner su id en `<APP>_SESIONES_MOTOR`.
+3. API de historial en la app (listar, mensajes, borrar) con el uid de la sesión de Firebase.
+4. Web: última conversación al abrir, lista de recientes, continuar con su `sesion_id`, borrar.
+   Guía de UX en `docs/ux-agentes.md`.
+5. Borrado de cuenta: `Historial.borrar_usuario(uid)`.
 6. `Evento` de cada turno con `Fin.trace_id`, para ir de un error a su traza.
 
 Contexto largo: `Conversacion` trae la compactación del chasis (`contexto()`); en un `App` propio,

@@ -8,15 +8,15 @@ pantalla con agente no se da por terminada hasta cumplir esta lista y pasar axe 
 - Habla un solo agente con el nombre de la app (el Concierge en Iterum, "Domi", "Vocatio"). Los
   especialistas no escriben en el chat: aparecen como **filas de trabajo** dentro de la respuesta
   ("Buscando hoteles…", "Revisando tu Expediente…"), con estado en curso, hecho o error.
-- Las filas salen de las llamadas a herramientas (`LlamadaHerramienta`, `Mensaje.filas`); cada app
-  traduce el nombre técnico a una frase. Nunca se muestran argumentos crudos ni ids.
+- Las filas salen de las llamadas a herramientas (`LlamadaHerramienta` en vivo, `Mensaje.filas` en
+  el historial); cada app traduce el nombre técnico a una frase. Nunca se muestran argumentos crudos ni ids.
 
 ## 2. Respuesta en flujo y control
 
 - El texto llega en trozos desde la primera palabra; mientras no hay texto, se ve la fila activa o un
   indicador de "pensando" con texto, no solo una animación.
 - **Detener** siempre visible mientras responde (botón con texto o etiqueta accesible). Detener
-  conserva lo ya escrito y lo marca como detenido.
+  conserva en pantalla lo ya escrito; en el historial ese turno queda como "sin respuesta".
 - El campo de texto no se bloquea mientras responde: se puede escribir el siguiente mensaje.
 
 ## 3. Errores y límites
@@ -42,11 +42,12 @@ pantalla con agente no se da por terminada hasta cumplir esta lista y pasar axe 
 ## 6. Historial en cualquier dispositivo
 
 - Al abrir el chat se ve la **última conversación** del recurso (viaje, perfil) donde quedó, leída
-  de Firestore en tiempo real: si se escribe en el celular, aparece en la compu.
+  de las sesiones de Agent Platform (`Historial`): lo escrito en el celular aparece en la compu al
+  abrir o volver a la pestaña.
 - **Conversaciones recientes**: lista con título (primer mensaje), fecha relativa y última línea;
   abrir una la continúa con su sesión.
 - **Nueva conversación** no borra la anterior: queda en recientes.
-- **Borrar conversación** con confirmación; borra el historial y la sesión del agente.
+- **Borrar conversación** con confirmación; borra la sesión del agente con todos sus mensajes.
 - Un turno que no terminó (cerraste la pestaña) se ve como "sin respuesta" con Reintentar.
 
 ## 7. Arranque

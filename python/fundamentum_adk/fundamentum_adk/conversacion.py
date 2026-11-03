@@ -23,9 +23,11 @@ from google.adk.apps import App
 from google.adk.plugins.base_plugin import BasePlugin
 from google.adk.runners import Runner
 from google.adk.sessions import BaseSessionService, InMemorySessionService
+from google.adk.sessions.base_session_service import GetSessionConfig
 from google.genai import types
 
 from fundamentum_adk.contexto import contexto
+from fundamentum_adk.sesiones import opciones_por_omision
 from fundamentum_adk.trazas import trace_id_actual
 
 
@@ -87,7 +89,8 @@ class Conversacion:
     """Un agente conversacional con su `Runner`. Se crea una vez por proceso y atiende a todos.
 
     `sesiones` guarda lo que recuerda el agente. Por omisión en memoria, que solo sirve en pruebas:
-    en Cloud Run se pierde al escalar a cero, así que en producción va `SesionesFirestore`.
+    en Cloud Run se pierde al escalar a cero, así que en producción va Agent Platform Sessions
+    (`sesiones_agent_platform`), que también es la fuente del historial visible (`Historial`).
     `en_flujo=False` pide la respuesta entera al modelo y la entrega como un solo `Trozo`.
     `contexto_largo` son los argumentos de `App` para compactación y caché (por omisión,
     `contexto()` del chasis; `{}` los apaga).
@@ -102,6 +105,7 @@ class Conversacion:
         sesiones: BaseSessionService | None = None,
         en_flujo: bool = True,
         contexto_largo: dict[str, Any] | None = None,
+        opciones_sesion: dict[str, Any] | None = None,
     ) -> None:
         self.agente = agente
         self.app = app
@@ -116,24 +120,36 @@ class Conversacion:
         )
         # Los plugins son de la app: este Runner no los cierra.
         self.runner.plugin_manager.set_skip_closing_plugins(True)
+        # Por omisión, la sesión vence a los 365 días en Agent Platform (`sesiones.RETENCION`).
+        self.opciones_sesion = (
+            opciones_por_omision(self.runner.session_service)
+            if opciones_sesion is None
+            else opciones_sesion
+        )
         self.config = RunConfig(
             streaming_mode=StreamingMode.SSE if en_flujo else StreamingMode.NONE
         )
 
     async def _sesion(self, usuario: str, sesion_id: str | None, estado: dict[str, Any]) -> str:
+        """La sesión `sesion_id` de `usuario`, o una nueva si no existe (venció o se borró).
+
+        Agent Platform rechaza leer la sesión de otra persona: eso es `SesionAjena`."""
         servicio = self.runner.session_service
         if sesion_id:
-            sesion = await servicio.get_session(
-                app_name=self.app, user_id=usuario, session_id=sesion_id
-            )
+            try:
+                sesion = await servicio.get_session(
+                    app_name=self.app,
+                    user_id=usuario,
+                    session_id=sesion_id,
+                    config=GetSessionConfig(num_recent_events=0),
+                )
+            except ValueError as e:
+                raise SesionAjena(f"la sesión {sesion_id} no es de {usuario}") from e
             if sesion is not None:
                 return sesion.id
-        try:
-            sesion = await servicio.create_session(
-                app_name=self.app, user_id=usuario, state=dict(estado), session_id=sesion_id
-            )
-        except Exception as e:  # el id ya existe con otro usuario
-            raise SesionAjena(f"la sesión {sesion_id} no es de {usuario}") from e
+        sesion = await servicio.create_session(
+            app_name=self.app, user_id=usuario, state=dict(estado), **self.opciones_sesion
+        )
         return sesion.id
 
     async def conversar(
@@ -150,8 +166,8 @@ class Conversacion:
         `estado` (p. ej. `{"uid": ..., "perfil_id": ...}`) lo fija el servidor: crea la sesión con
         él y, si ya existía, lo vuelve a escribir antes del turno, así que el modelo no puede
         cambiar la identidad entre turnos. Las sesiones son por usuario: con el id de otra persona
-        no se ve su historial (se abre una sesión propia, o `SesionAjena` si el servicio de
-        sesiones no admite el id repetido).
+        no se ve su historial (se abre una sesión propia, o `SesionAjena` en Agent Platform). Un
+        id que ya no existe abre una sesión nueva; `Fin.sesion_id` trae la que quedó.
 
         `traza_entrante` es el contexto de OpenTelemetry de la petición web (`contexto_entrante`):
         así el turno queda en la misma traza que la petición. `Fin.trace_id` la identifica.
