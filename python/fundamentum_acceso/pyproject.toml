@@ -1,6 +1,6 @@
 [project]
 name = "fundamentum-acceso"
-version = "1.3.0"
+version = "1.4.0"
 description = "Lista de acceso común: quién entra a cada app en beta privada y el portero de Firebase Auth."
 requires-python = ">=3.11,<3.13"
 dependencies = ["pydantic>=2.9"]

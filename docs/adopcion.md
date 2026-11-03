@@ -157,6 +157,67 @@ Una sola lista decide quién entra a cada app (`fundamentum-acceso`). Pasos por 
    invitación." con Solicitar acceso y Usar otra cuenta.
 5. Salir de beta: `apps/{app}.modo = "abierta"`, sin desplegar nada.
 
+## 4e. Conversación persistente: sesiones, historial visible y trazas (1.4.0)
+
+Una sola fuente: **Agent Platform Sessions**. En Agent Runtime (Iterum) ya la usa `AdkApp`. En Cloud
+Run (Domi, Vocatio), un motor sin código guarda las sesiones (`plantillas/sesiones/crear_motor.py`,
+una vez por app) y `Conversacion` lo usa con `sesiones_agent_platform`.
+
+```python
+from fundamentum_adk import (
+    Conversacion,
+    Historial,
+    PluginResumen,
+    activar_trazas,
+    contexto_entrante,
+    sesiones_agent_platform,
+    vaciar,
+)
+
+activar_trazas(proyecto)  # Cloud Run; en Agent Runtime, AdkApp(enable_tracing=True)
+sesiones = sesiones_agent_platform(proyecto, os.environ["DOMI_SESIONES_MOTOR"])
+chat = Conversacion(
+    agente, plugins=[*plugins, PluginResumen(agente.name)], app="domi", sesiones=sesiones
+)
+historial = Historial(
+    sesiones,
+    app="domi",
+    agente=agente.name,
+    enlazar=lambda herramienta, r: [{"tipo": "inmueble", "id": i} for i in ids(r)],
+)
+
+async for e in chat.conversar(
+    texto,
+    usuario=uid,
+    sesion_id=sid,
+    estado={"uid": uid},
+    traza_entrante=contexto_entrante(request.headers),  # traceparent de la web
+):
+    ...
+vaciar()  # al final de la petición, con CPU solo durante la petición
+
+# API de la web
+await historial.listar(uid, filtro={"perfil_id": pid})  # recientes: título, último, fecha
+await historial.mensajes(uid, sid)  # mensajes, filas, enlaces, trace_id
+await historial.borrar(uid, sid)  # y borrar_usuario(uid) al borrar la cuenta
+```
+
+En Agent Runtime (Iterum) `PluginResumen` va en `App(plugins=[...])` y el `Historial` lo arma el
+servidor web con `sesiones_agent_platform(proyecto, <motor del Concierge>)`. Con el motor fijo, `app_name` es libre (p. ej. `"iterum"`); debe empezar con letra.
+
+Pasos por app:
+
+1. Extra `fundamentum-adk[agentplatform]` y `roles/aiplatform.user` en la cuenta del servicio.
+2. Crear el motor de sesiones (salvo Iterum) y poner su id en `<APP>_SESIONES_MOTOR`.
+3. API de historial en la app (listar, mensajes, borrar) con el uid de la sesión de Firebase.
+4. Web: última conversación al abrir, lista de recientes, continuar con su `sesion_id`, borrar.
+   Guía de UX en `docs/ux-agentes.md`.
+5. Borrado de cuenta: `Historial.borrar_usuario(uid)`.
+6. `Evento` de cada turno con `Fin.trace_id`, para ir de un error a su traza.
+
+Contexto largo: `Conversacion` trae la compactación del chasis (`contexto()`); en un `App` propio,
+`App(..., **contexto())`. La caché de contexto se prende por app solo si las evals lo justifican.
+
 ## 5. Módulo de Terraform
 
 ```hcl
