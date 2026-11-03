@@ -25,6 +25,15 @@ from google.adk.runners import Runner
 from google.adk.sessions import BaseSessionService, InMemorySessionService
 from google.genai import types
 
+from fundamentum_adk.contexto import contexto
+from fundamentum_adk.trazas import trace_id_actual
+
+
+def _tracer() -> Any:
+    from opentelemetry import trace
+
+    return trace.get_tracer("fundamentum")
+
 
 class SesionAjena(PermissionError):
     """El servicio de sesiones rechazó el id porque ya es de otra persona."""
@@ -54,6 +63,7 @@ class Fin:
     sesion_id: str
     usos: list[Uso] = field(default_factory=list)  # uno por respuesta del modelo
     latencia_ms: int = 0
+    trace_id: str | None = None  # para unir el turno con su traza en Cloud Trace
 
     @property
     def uso(self) -> Uso:
@@ -76,9 +86,11 @@ def _texto(contenido: types.Content | None) -> str:
 class Conversacion:
     """Un agente conversacional con su `Runner`. Se crea una vez por proceso y atiende a todos.
 
-    `sesiones` guarda el historial (por omisión en memoria, que basta para una instancia de Cloud
-    Run; para varias, un servicio persistente de ADK). `en_flujo=False` pide la respuesta entera al
-    modelo y la entrega como un solo `Trozo`.
+    `sesiones` guarda lo que recuerda el agente. Por omisión en memoria, que solo sirve en pruebas:
+    en Cloud Run se pierde al escalar a cero, así que en producción va `SesionesFirestore`.
+    `en_flujo=False` pide la respuesta entera al modelo y la entrega como un solo `Trozo`.
+    `contexto_largo` son los argumentos de `App` para compactación y caché (por omisión,
+    `contexto()` del chasis; `{}` los apaga).
     """
 
     def __init__(
@@ -89,11 +101,17 @@ class Conversacion:
         app: str = "fundamentum",
         sesiones: BaseSessionService | None = None,
         en_flujo: bool = True,
+        contexto_largo: dict[str, Any] | None = None,
     ) -> None:
         self.agente = agente
         self.app = app
         self.runner = Runner(
-            app=App(name=app, root_agent=agente, plugins=list(plugins)),
+            app=App(
+                name=app,
+                root_agent=agente,
+                plugins=list(plugins),
+                **(contexto() if contexto_largo is None else contexto_largo),
+            ),
             session_service=sesiones or InMemorySessionService(),
         )
         # Los plugins son de la app: este Runner no los cierra.
@@ -125,6 +143,7 @@ class Conversacion:
         usuario: str,
         sesion_id: str | None = None,
         estado: dict[str, Any] | None = None,
+        traza_entrante: Any = None,
     ) -> AsyncIterator[EventoConversacion]:
         """Un turno: manda `mensaje` y entrega los eventos del agente hasta `Fin`.
 
@@ -133,6 +152,9 @@ class Conversacion:
         cambiar la identidad entre turnos. Las sesiones son por usuario: con el id de otra persona
         no se ve su historial (se abre una sesión propia, o `SesionAjena` si el servicio de
         sesiones no admite el id repetido).
+
+        `traza_entrante` es el contexto de OpenTelemetry de la petición web (`contexto_entrante`):
+        así el turno queda en la misma traza que la petición. `Fin.trace_id` la identifica.
         """
         estado = estado or {}
         sesion = await self._sesion(usuario, sesion_id, estado)
@@ -143,31 +165,35 @@ class Conversacion:
         )
         final, usos, en_curso = "", [], False
         inicio = time.monotonic()
-        async for evento in self.runner.run_async(
-            user_id=usuario,
-            session_id=sesion,
-            new_message=contenido,
-            state_delta=dict(estado) or None,
-            run_config=self.config,
-        ):
-            texto = _texto(evento.content)
-            if evento.partial:
-                if texto:
-                    en_curso = True
+        with _tracer().start_as_current_span(
+            "fundamentum.conversacion", context=traza_entrante, attributes={"app": self.app}
+        ) as span:
+            traza = trace_id_actual() if span.get_span_context().is_valid else None
+            async for evento in self.runner.run_async(
+                user_id=usuario,
+                session_id=sesion,
+                new_message=contenido,
+                state_delta=dict(estado) or None,
+                run_config=self.config,
+            ):
+                texto = _texto(evento.content)
+                if evento.partial:
+                    if texto:
+                        en_curso = True
+                        yield Trozo(texto)
+                    continue
+                if evento.usage_metadata is not None:
+                    usos.append(Uso.desde_metadata(evento.usage_metadata))
+                for llamada in evento.get_function_calls():
+                    yield LlamadaHerramienta(llamada.name or "", dict(llamada.args or {}))
+                for respuesta in evento.get_function_responses():
+                    yield RespuestaHerramienta(respuesta.name or "", dict(respuesta.response or {}))
+                # Sin trozos previos (modelo sin flujo o respuesta de un plugin), el texto va entero.
+                if texto and not en_curso:
                     yield Trozo(texto)
-                continue
-            if evento.usage_metadata is not None:
-                usos.append(Uso.desde_metadata(evento.usage_metadata))
-            for llamada in evento.get_function_calls():
-                yield LlamadaHerramienta(llamada.name or "", dict(llamada.args or {}))
-            for respuesta in evento.get_function_responses():
-                yield RespuestaHerramienta(respuesta.name or "", dict(respuesta.response or {}))
-            # Sin trozos previos (modelo sin flujo o respuesta de un plugin), el texto va entero.
-            if texto and not en_curso:
-                yield Trozo(texto)
-            en_curso = False
-            if evento.is_final_response() and texto:
-                final = texto
+                en_curso = False
+                if evento.is_final_response() and texto:
+                    final = texto
         modelo = (
             self.agente.model if isinstance(self.agente.model, str) else self.agente.model.model
         )
@@ -177,4 +203,5 @@ class Conversacion:
             sesion_id=sesion,
             usos=usos,
             latencia_ms=round((time.monotonic() - inicio) * 1000),
+            trace_id=traza,
         )

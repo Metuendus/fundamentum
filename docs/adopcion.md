@@ -157,6 +157,71 @@ Una sola lista decide quién entra a cada app (`fundamentum-acceso`). Pasos por 
    invitación." con Solicitar acceso y Usar otra cuenta.
 5. Salir de beta: `apps/{app}.modo = "abierta"`, sin desplegar nada.
 
+## 4e. Conversación persistente: sesiones, historial visible y trazas (1.4.0)
+
+Dos capas, cada una con su dueño:
+
+- **Sesión de ADK** (lo que recuerda el agente). En Agent Runtime la da su servicio de sesiones. En
+  Cloud Run, `SesionesFirestore`: sin ella, `Conversacion` olvida todo al escalar a cero.
+- **Historial visible** (lo que ve la persona). `PluginHistorial` lo escribe desde el `Runner` en
+  `historial/{uid}/conversaciones/{id}/mensajes`; la web lo lee directo de Firestore con las reglas de
+  `plantillas/historial/firestore.rules`. El id de la conversación es el de la sesión de ADK.
+
+```python
+from fundamentum_adk import (
+    Conversacion,
+    Historial,
+    PluginHistorial,
+    SesionesFirestore,
+    activar_trazas,
+    contexto_entrante,
+    vaciar,
+)
+
+activar_trazas(proyecto)  # Cloud Run; en Agent Runtime, AdkApp(enable_tracing=True)
+historial = Historial(proyecto=proyecto)
+chat = Conversacion(
+    agente,
+    plugins=[
+        *plugins,
+        PluginHistorial(
+            historial,
+            agente=agente.name,
+            app="domi",
+            recursos={"perfil_id": "perfil"},
+            enlazar=lambda herramienta, r: [{"tipo": "inmueble", "id": i} for i in ids(r)],
+        ),
+    ],
+    app="domi",
+    sesiones=SesionesFirestore(proyecto=proyecto),
+)
+async for e in chat.conversar(
+    texto,
+    usuario=uid,
+    sesion_id=sid,
+    estado={"uid": uid},
+    traza_entrante=contexto_entrante(request.headers),  # traceparent de la web
+):
+    ...
+vaciar()  # al final de la petición, con CPU solo durante la petición
+```
+
+En Agent Runtime (Iterum) va igual en `App(plugins=[..., PluginHistorial(...)])`; el plugin no
+guarda el cliente de Firestore al serializarse.
+
+Pasos por app:
+
+1. Extra `fundamentum-adk[firestore]`.
+2. Copiar el fragmento de `plantillas/historial/firestore.rules` y probarlo en el emulador.
+3. Módulo `infra/modulos/historial` (TTL en `vence`, 365 días por omisión).
+4. Borrado de cuenta: `Historial.borrar_usuario(uid)` y las sesiones del usuario.
+5. Web: lista de conversaciones recientes, abrir una y continuarla con su `sesion_id`, borrar una
+   (el servidor borra conversación y sesión). Guía de UX en `docs/ux-agentes.md`.
+6. `Evento` de cada turno con `Fin.trace_id`, para ir de un error a su traza.
+
+Contexto largo: `Conversacion` trae la compactación del chasis (`contexto()`); en un `App` propio,
+`App(..., **contexto())`. La caché de contexto se prende por app solo si las evals lo justifican.
+
 ## 5. Módulo de Terraform
 
 ```hcl

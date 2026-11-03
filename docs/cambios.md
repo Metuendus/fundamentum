@@ -1,5 +1,28 @@
 # Cambios
 
+## 1.4.0 · 2026-11-03 · conversación persistente, historial visible y trazas
+
+- `SesionesFirestore` (`fundamentum-adk`, extra `firestore`): `BaseSessionService` de ADK sobre
+  Firestore (`adk/{app}/usuarios/{uid}/sesiones/{sid}/eventos`). Estado por alcance (`app:`, `user:`,
+  sesión; `temp:` no se guarda), `num_recent_events` y `after_timestamp`, sesiones por usuario y
+  `vence` para TTL. Un evento de más de 900 KB guarda sus adjuntos en línea como una nota.
+- `Historial` y `PluginHistorial`: el historial visible por persona
+  (`historial/{uid}/conversaciones/{id}/mensajes`), escrito desde el `Runner` (Agent Runtime o
+  `Conversacion`): mensaje de la persona, respuesta final, filas de trabajo, enlaces y `trace_id`.
+  Solo el agente raíz abre conversación (los `AgentTool` no). Un error al escribir no rompe el turno.
+- Trazas: `activar_trazas`, `vaciar`, `trace_id_actual`, `contexto_entrante` y `enlace_traza`.
+  `Conversacion` abre un span `fundamentum.conversacion` (hijo de la petición web si llega
+  `traza_entrante`) y `Fin.trace_id` lo identifica.
+- Contexto largo: `contexto()` da compactación de eventos (desde 60 mil tokens, 20 eventos crudos) y,
+  opcional, caché de contexto. `Conversacion` la trae encendida (`contexto_largo={}` la apaga).
+- ADK 2.13.0 en el lock (dependencia `>=2.10,<3`).
+- `infra/modulos/historial`: TTL de `vence` en sesiones, eventos, conversaciones y mensajes.
+  `plantillas/historial/firestore.rules`: la persona lee su historial; nadie escribe desde el cliente.
+- `docs/ux-agentes.md`: la lista de UX para los agentes de las tres apps.
+- Por qué: en Domi el chat olvidaba al escalar a cero; en Iterum el agente recordaba pero la persona
+  no veía nada al recargar o cambiar de dispositivo; Vocatio no tenía trazas.
+- Los cinco paquetes van en 1.4.0.
+
 ## 1.3.0 · 2026-10-29 · lista de acceso común
 
 - Paquete nuevo `fundamentum-acceso`: una sola lista de quién entra a cada app mientras está en beta

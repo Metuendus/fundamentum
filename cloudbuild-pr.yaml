@@ -13,7 +13,7 @@ steps:
       - -ceu
       - |
         terraform fmt -check -recursive infra
-        for dir in infra/modulos/medicion infra/proyecto; do
+        for dir in infra/modulos/medicion infra/modulos/historial infra/proyecto; do
           (cd "$$dir" && terraform init -backend=false -input=false && terraform validate)
         done
     waitFor: ["-"]
