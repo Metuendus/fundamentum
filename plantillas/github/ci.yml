@@ -32,8 +32,9 @@ jobs:
         with:
           persist-credentials: false
           # En un push, paths-filter compara contra el commit anterior y sin credenciales no puede bajarlo:
-          # con el historial completo ya está aquí. En los PR usa la API y basta con un commit.
-          fetch-depth: ${{ github.event_name == 'push' && 0 || 1 }}
+          # con el historial completo ya está aquí. En los PR usa la API y basta con un commit. Va entre comillas:
+          # un 0 numérico es falso en las expresiones y el `|| '1'` lo tapaba.
+          fetch-depth: ${{ github.event_name == 'push' && '0' || '1' }}
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filtro
         with:
