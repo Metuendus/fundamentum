@@ -1,0 +1,67 @@
+# Workflow reutilizable: Python con uv (ruff, pytest y auditoría de dependencias).
+# Se llama desde el ci.yml de cada app, fijado por etiqueta del chasis:
+#   uses: Metuendus/fundamentum/.github/workflows/python-uv.yml@vX.Y.Z
+# Corre sin credenciales de nube.
+name: python-uv
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: Versión de Python (Iterum usa 3.11; Domi, Vocatio y el chasis 3.12).
+        type: string
+        default: "3.12"
+      directorio:
+        description: Carpeta donde está el pyproject.toml raíz.
+        type: string
+        default: "."
+      sync:
+        description: Comando que instala las dependencias.
+        type: string
+        default: uv sync --all-packages --frozen
+      comando:
+        description: Comando de verificación.
+        type: string
+        default: uv run ruff check . && uv run ruff format --check . && uv run pytest -q
+      auditar:
+        description: Revisa vulnerabilidades conocidas con pip-audit sobre el lock.
+        type: boolean
+        default: true
+      ignorar:
+        description: IDs de vulnerabilidades aceptadas, separados por espacio. Cada una con su razón en el ci.yml que la pasa.
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ${{ inputs.directorio }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          python-version: ${{ inputs.python-version }}
+          enable-cache: true
+          working-directory: ${{ inputs.directorio }}
+      - name: Instalar
+        run: ${{ inputs.sync }}
+      - name: Verificar
+        run: ${{ inputs.comando }}
+      - name: Auditar dependencias
+        if: inputs.auditar
+        env:
+          IGNORAR: ${{ inputs.ignorar }}
+        run: |
+          uv export --frozen --all-packages --no-hashes --no-emit-workspace --no-header \
+            | grep -v -E '^\s*(#|-e |.* @ )' > "$RUNNER_TEMP/requisitos.txt"
+          args=()
+          for id in $IGNORAR; do args+=(--ignore-vuln "$id"); done
+          uvx pip-audit --disable-pip --no-deps --progress-spinner off "${args[@]}" -r "$RUNNER_TEMP/requisitos.txt"

@@ -1,5 +1,19 @@
 # Cambios
 
+## 1.5.0 · 2026-11-06 · CI con GitHub Actions para el chasis y las apps
+
+- Workflows reutilizables en `.github/workflows/`: `python-uv` (uv, ruff, pytest y `pip-audit`),
+  `web-node` (npm y `npm audit`), `reglas-firebase` (emuladores con Java 21) y `terraform` (fmt y
+  validate sin backend). Las apps los llaman fijados por etiqueta; plantilla en `plantillas/github/ci.yml`.
+- El chasis corre su propio `ci.yml` en cada PR y push a `main`: Python, Atrium y Terraform con filtros
+  por ruta, y `ci-ok` como único check obligatorio. Se quita `cloudbuild-pr.yaml`, que no tenía trigger.
+- Dependabot semanal para uv, npm (Atrium), GitHub Actions y Terraform.
+- Lock: suben `filelock`, `joserfc`, `litellm`, `nltk`, `pyasn1` y `certifi` para cerrar vulnerabilidades
+  conocidas. Quedan dos aceptadas con su razón en `ci.yml`, topadas por dependencias de Google.
+- Por qué: solo Iterum tenía CI automático y ninguna app revisaba sus dependencias. Decisión y costos en
+  `docs/ci.md`.
+- Los cinco paquetes van en 1.5.0.
+
 ## 1.4.1 · 2026-11-03 · menos tokens por mensaje
 
 - `PluginPodar(herramientas, conservar=1)`: antes de cada llamada al modelo, cambia por un aviso
