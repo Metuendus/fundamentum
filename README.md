@@ -22,7 +22,7 @@ evaluaciones y el design system. Cada app conserva sus agentes, su dominio y su 
 | Tokens (base MiniMax + temas) y UI | `ts/` | fase E |
 
 Plan completo y razones: [`docs/plan.md`](docs/plan.md). Contrato de medición:
-[`docs/medicion.md`](docs/medicion.md). Cómo lo adopta cada app: [`docs/adopcion.md`](docs/adopcion.md). UX de agentes:
+[`docs/medicion.md`](docs/medicion.md). Cómo lo adopta cada app: [`docs/adopcion.md`](docs/adopcion.md). CI/CD: [`docs/ci.md`](docs/ci.md). UX de agentes:
 [`docs/ux-agentes.md`](docs/ux-agentes.md).
 
 ## Desarrollo
@@ -30,7 +30,7 @@ Plan completo y razones: [`docs/plan.md`](docs/plan.md). Contrato de medición:
 ```bash
 uv sync --all-packages
 uv run ruff check . && uv run ruff format --check . && uv run pytest -q
-terraform fmt -check -recursive infra   # el validate de cada módulo corre en CI (cloudbuild-pr.yaml)
+terraform fmt -check -recursive infra   # el validate de cada módulo corre en CI (.github/workflows/ci.yml)
 ```
 
 ## Reglas

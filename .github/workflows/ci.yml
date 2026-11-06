@@ -1,0 +1,95 @@
+# CI del chasis. Corre en cada PR y en cada push a main, sin credenciales de nube.
+# El único check obligatorio es `ci-ok`: así los jobs que se saltan por ruta no bloquean el merge.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  cambios:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      python: ${{ steps.filtro.outputs.python }}
+      atrium: ${{ steps.filtro.outputs.atrium }}
+      terraform: ${{ steps.filtro.outputs.terraform }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filtro
+        with:
+          filters: |
+            ci: &ci
+              - .github/workflows/**
+            python:
+              - *ci
+              - python/**
+              - plantillas/**
+              - pyproject.toml
+              - uv.lock
+            atrium:
+              - *ci
+              - apps/atrium/**
+            terraform:
+              - *ci
+              - infra/**
+
+  python:
+    needs: cambios
+    if: github.event_name == 'push' || needs.cambios.outputs.python == 'true'
+    uses: ./.github/workflows/python-uv.yml
+    with:
+      # Topadas por dependencias de Google; se quitan cuando ellas suban su tope.
+      # CVE-2026-114603 · opentelemetry-api: google-adk 2.13 pide <=1.44 y el arreglo está en 1.45.1.
+      # CVE-2026-114612 · litellm: solo lo trae el extra `eval` (google-cloud-aiplatform[evaluation]),
+      #   cuyo tope no deja llegar al arreglo (1.100.4). No corre en producción.
+      ignorar: CVE-2026-114603 CVE-2026-114612
+
+  atrium:
+    needs: cambios
+    if: github.event_name == 'push' || needs.cambios.outputs.atrium == 'true'
+    uses: ./.github/workflows/web-node.yml
+    with:
+      directorio: apps/atrium
+      comando: |
+        npm run typecheck
+        npm run lint
+        npm test
+        npm run build
+
+  terraform:
+    needs: cambios
+    if: github.event_name == 'push' || needs.cambios.outputs.terraform == 'true'
+    uses: ./.github/workflows/terraform.yml
+    with:
+      directorios: infra/modulos/medicion infra/proyecto
+      fmt-recursivo: true
+
+  ci-ok:
+    needs: [cambios, python, atrium, terraform]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Todos los jobs pasaron o se saltaron
+        env:
+          RESULTADOS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Resultados: $RESULTADOS"
+          for r in $RESULTADOS; do
+            case "$r" in success|skipped) ;; *) exit 1 ;; esac
+          done

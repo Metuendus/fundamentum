@@ -1,0 +1,50 @@
+# Workflow reutilizable: Node (lint, tipos, pruebas y build de una web).
+#   uses: Metuendus/fundamentum/.github/workflows/web-node.yml@vX.Y.Z
+# Corre sin credenciales de nube.
+name: web-node
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        type: string
+        default: "22"
+      directorio:
+        description: Carpeta donde está el package-lock.json.
+        type: string
+        default: "."
+      comando:
+        description: Comandos de verificación, uno por línea, después de npm ci.
+        type: string
+        required: true
+      auditar:
+        description: Falla con vulnerabilidades altas o críticas en dependencias de producción.
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ${{ inputs.directorio }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+          cache-dependency-path: ${{ inputs.directorio }}/package-lock.json
+      - name: Instalar
+        run: npm ci
+      - name: Verificar
+        run: ${{ inputs.comando }}
+      - name: Auditar dependencias
+        if: inputs.auditar
+        run: npm audit --omit=dev --audit-level=high

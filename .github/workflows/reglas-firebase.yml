@@ -1,0 +1,48 @@
+# Workflow reutilizable: pruebas de reglas y acciones contra los emuladores de Firebase.
+#   uses: Metuendus/fundamentum/.github/workflows/reglas-firebase.yml@vX.Y.Z
+# Corre sin credenciales de nube (proyecto demo-*).
+name: reglas-firebase
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        type: string
+        default: "22"
+      directorio:
+        description: Carpeta con el package.json de las pruebas (p. ej. firebase).
+        type: string
+        default: firebase
+      comando:
+        description: Comandos, uno por línea, desde el directorio (incluye los npm ci que hagan falta).
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  reglas:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ${{ inputs.directorio }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ inputs.node-version }}
+      - name: Caché de los emuladores
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/firebase/emulators
+          key: emuladores-${{ runner.os }}-${{ hashFiles(format('{0}/package-lock.json', inputs.directorio)) }}
+      - name: Probar
+        run: ${{ inputs.comando }}

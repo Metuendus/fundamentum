@@ -28,5 +28,5 @@ cambia aquí lo heredan tres apps: cada cambio es una versión nueva, con prueba
 
 ```bash
 uv sync --all-packages && uv run ruff check . && uv run ruff format --check . && uv run pytest -q
-terraform fmt -check -recursive infra   # el validate de cada módulo corre en CI (cloudbuild-pr.yaml)
+terraform fmt -check -recursive infra   # el validate de cada módulo corre en CI (.github/workflows/ci.yml)
 ```
