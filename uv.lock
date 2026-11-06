@@ -1,12 +1,12 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11, <3.13"
 resolution-markers = [
     "python_full_version >= '3.12' and sys_platform == 'emscripten'",
     "python_full_version >= '3.12' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version < '3.12' and sys_platform == 'win32'",
     "python_full_version < '3.12' and sys_platform == 'emscripten'",
-    "python_full_version >= '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 
@@ -748,7 +748,7 @@ requires-dist = [
     { name = "anthropic", extras = ["vertex"], marker = "extra == 'claude'", specifier = ">=0.40" },
     { name = "fundamentum-modelos", editable = "python/fundamentum_modelos" },
     { name = "google-adk", extras = ["bigquery-analytics"], specifier = ">=2.10,<3" },
-    { name = "google-adk", extras = ["gcp"], marker = "extra == 'agentplatform'", specifier = ">=2.10,<3" },
+    { name = "google-adk", extras = ["gcp"], marker = "extra == 'agentplatform'", specifier = ">=2.13.0,<3" },
 ]
 provides-extras = ["claude", "agentplatform"]
 

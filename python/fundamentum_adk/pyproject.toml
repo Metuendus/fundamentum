@@ -7,7 +7,7 @@ dependencies = ["fundamentum-modelos>=1,<2", "google-adk[bigquery-analytics]>=2.
 
 [project.optional-dependencies]
 claude = ["anthropic[vertex]>=0.40"]
-agentplatform = ["google-adk[gcp]>=2.10,<3"]
+agentplatform = ["google-adk[gcp]>=2.13.0,<3"]
 
 [tool.uv.sources]
 fundamentum-modelos = { workspace = true }
