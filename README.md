@@ -12,6 +12,7 @@ de evals y control de acceso, en una sola dependencia versionada.**
 [![Terraform](https://img.shields.io/badge/IaC-Terraform-844FBA?logo=terraform&logoColor=white)](infra/)
 [![uv](https://img.shields.io/badge/deps-uv-DE5FE9?logo=uv&logoColor=white)](https://docs.astral.sh/uv/)
 [![Ruff](https://img.shields.io/badge/lint-Ruff-D7FF64?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
+[![Licencia GPL-3.0](https://img.shields.io/badge/licencia-GPL--3.0-blue)](LICENSE)
 
 Como en la industria automotriz: un chasis estándar y, encima, varios modelos que no se parecen.
 Fundamentum es la plataforma común de tres productos de IA: **Iterum** (viajes), **Vocatio**
@@ -311,6 +312,12 @@ El plan original está en [`docs/plan.md`](docs/plan.md) y el historial de versi
 - El chasis nunca bloquea un release candidate: si una app necesita algo urgente, lo hace en local
   y después lo sube.
 - El repo es público: ningún secreto ni dato de usuarios en el código.
+
+## Licencia
+
+[GNU GPL v3.0](LICENSE). Puedes usar, estudiar, modificar y redistribuir este código siempre que
+conserves el aviso de autoría y la licencia, y que lo que distribuyas a partir de él se publique
+también bajo GPL-3.0.
 
 ---
 

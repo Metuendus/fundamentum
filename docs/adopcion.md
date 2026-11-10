@@ -13,23 +13,23 @@ Artifact Registry, credenciales ni pasos extra en CI ni en Agent Runtime.
 # pyproject.toml del paquete de agentes
 [project]
 dependencies = [
-  "fundamentum-adk==1.0.0",
-  "fundamentum-modelos==1.0.0",
-  "fundamentum-eventos[firestore]==1.0.0",
+  "fundamentum-adk==1.5.0",
+  "fundamentum-modelos==1.5.0",
+  "fundamentum-eventos[firestore]==1.5.0",
 ]
 
 [dependency-groups]
-dev = ["fundamentum-evals==1.0.0"]
+dev = ["fundamentum-evals==1.5.0"]
 
 [tool.uv.sources]
-fundamentum-adk = { git = "https://github.com/Metuendus/fundamentum", tag = "v1.0.0", subdirectory = "python/fundamentum_adk" }
-fundamentum-modelos = { git = "https://github.com/Metuendus/fundamentum", tag = "v1.0.0", subdirectory = "python/fundamentum_modelos" }
-fundamentum-eventos = { git = "https://github.com/Metuendus/fundamentum", tag = "v1.0.0", subdirectory = "python/fundamentum_eventos" }
-fundamentum-evals = { git = "https://github.com/Metuendus/fundamentum", tag = "v1.0.0", subdirectory = "python/fundamentum_evals" }
+fundamentum-adk = { git = "https://github.com/Metuendus/fundamentum", tag = "v1.5.0", subdirectory = "python/fundamentum_adk" }
+fundamentum-modelos = { git = "https://github.com/Metuendus/fundamentum", tag = "v1.5.0", subdirectory = "python/fundamentum_modelos" }
+fundamentum-eventos = { git = "https://github.com/Metuendus/fundamentum", tag = "v1.5.0", subdirectory = "python/fundamentum_eventos" }
+fundamentum-evals = { git = "https://github.com/Metuendus/fundamentum", tag = "v1.5.0", subdirectory = "python/fundamentum_evals" }
 ```
 
 Con pip (Iterum, Agent Runtime):
-`fundamentum-adk @ git+https://github.com/Metuendus/fundamentum@v1.0.0#subdirectory=python/fundamentum_adk`
+`fundamentum-adk @ git+https://github.com/Metuendus/fundamentum@v1.5.0#subdirectory=python/fundamentum_adk`
 y lo mismo para `fundamentum-modelos`.
 
 Para subir de versión se cambian juntas la versión y las etiquetas, y se corre `uv lock`.
@@ -230,7 +230,7 @@ Menos tokens por mensaje (1.4.1):
 
 ```hcl
 module "medicion" {
-  source            = "git::https://github.com/Metuendus/fundamentum.git//infra/modulos/medicion?ref=v1.0.0"
+  source            = "git::https://github.com/Metuendus/fundamentum.git//infra/modulos/medicion?ref=v1.5.0"
   project_id        = var.project_id
   escritores        = ["serviceAccount:${google_service_account.agentes.email}"]
   usuarios_internos = var.usuarios_internos
