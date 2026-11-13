@@ -5,6 +5,7 @@ export const APPS = [
   { id: "iterum", nombre: "Iterum", proyecto: "travel-planner-509322" },
   { id: "domi", nombre: "Domi", proyecto: "domi-mx" },
   { id: "vocatio", nombre: "Vocatio", proyecto: "vocatio-mx" },
+  { id: "expensum", nombre: "Expensum", proyecto: "expensum-mx" },
 ] as const;
 
 export type AppId = (typeof APPS)[number]["id"];

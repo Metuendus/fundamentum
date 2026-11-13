@@ -98,7 +98,7 @@ class AlmacenFirestore implements Almacen {
 /** Demostración: datos en memoria, se pierden al reiniciar. */
 class AlmacenMemoria implements Almacen {
   private lista = new Map<string, Pase>();
-  private modo: Record<AppId, Modo> = { iterum: "beta", domi: "beta", vocatio: "beta" };
+  private modo: Record<AppId, Modo> = { iterum: "beta", domi: "beta", vocatio: "beta", expensum: "beta" };
   private pendientes: Solicitud[] = [
     { id: "s1", correo: "ana@ejemplo.com", app: "domi", motivo: "Busco depa en la Roma", creada: "2026-10-28T18:00:00.000Z" },
   ];

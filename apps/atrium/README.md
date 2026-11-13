@@ -1,6 +1,6 @@
 # Atrium
 
-Panel privado de las apps: quién entra a Iterum, Domi y Vocatio mientras están en beta privada, y
+Panel privado de las apps: quién entra a Iterum, Domi, Vocatio y Expensum mientras están en beta privada, y
 más adelante cuánto se usa cada una. Escribe la lista que lee el portero de `fundamentum-acceso`.
 
 ## Qué hace
@@ -33,7 +33,7 @@ Permisos de la cuenta `atrium@josecarloscorona-web`:
 | Dónde | Rol | Para qué |
 | --- | --- | --- |
 | josecarloscorona-web | `roles/datastore.user` | Leer y escribir la lista |
-| travel-planner-509322, domi-mx, vocatio-mx | `roles/firebaseauth.admin` | Listar cuentas y revocar sesiones |
+| travel-planner-509322, domi-mx, vocatio-mx, expensum-mx | `roles/firebaseauth.admin` | Listar cuentas y revocar sesiones |
 
 ## Desarrollo
 
