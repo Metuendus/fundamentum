@@ -22,6 +22,7 @@ const DEMO: Record<AppId, Cuenta[]> = {
   ],
   domi: [],
   vocatio: [],
+  expensum: [],
 };
 
 /** Cuentas de Firebase Auth de una app, de la más reciente a la más antigua por último acceso. */

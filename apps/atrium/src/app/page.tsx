@@ -44,7 +44,7 @@ export default async function Inicio() {
       <header className={s.cabecera}>
         <div>
           <h1 className={s.titulo}>Atrium</h1>
-          <p className={s.sub}>Quién entra a Iterum, Domi y Vocatio.</p>
+          <p className={s.sub}>Quién entra a Iterum, Domi, Vocatio y Expensum.</p>
         </div>
         <p className={s.sub}>
           {enNube() ? admin : "Demostración: los cambios viven en memoria"}

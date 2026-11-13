@@ -1,5 +1,12 @@
 # Cambios
 
+## Atrium · 2026-11-13 · Expensum en la lista de acceso
+
+- Atrium muestra Expensum (`expensum-mx`) junto a Iterum, Domi y Vocatio: modo, lista, solicitudes y
+  cuentas. La cuenta `atrium@josecarloscorona-web` necesita `roles/firebaseauth.admin` en `expensum-mx`
+  (lo da el Terraform de Expensum).
+- Solo cambia Atrium (se despliega desde `main`); los paquetes siguen en 1.5.0.
+
 ## 1.5.0 · 2026-11-06 · CI con GitHub Actions para el chasis y las apps
 
 - Workflows reutilizables en `.github/workflows/`: `python-uv` (uv, ruff, pytest y `pip-audit`),

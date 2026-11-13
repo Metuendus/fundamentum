@@ -11,6 +11,7 @@ test("normaliza y valida correos", () => {
 
 test("solo acepta apps y modos conocidos", () => {
   assert.ok(esApp("domi") && !esApp("otra"));
+  assert.ok(esApp("expensum"));
   assert.ok(esModo("abierta") && !esModo("cerrada"));
 });
 

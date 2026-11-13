@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Atrium",
-  description: "Quién entra a Iterum, Domi y Vocatio.",
+  description: "Quién entra a Iterum, Domi, Vocatio y Expensum.",
   robots: { index: false, follow: false },
 };
 
