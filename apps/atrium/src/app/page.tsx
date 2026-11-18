@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { APPS, ORIGEN, ordenarPases, vigente, type AppId } from "@/lib/acceso";
 import { almacen } from "@/lib/almacen";
 import { enNube } from "@/lib/config";
@@ -47,7 +48,7 @@ export default async function Inicio() {
           <p className={s.sub}>Quién entra a Iterum, Domi, Vocatio y Expensum.</p>
         </div>
         <p className={s.sub}>
-          {enNube() ? admin : "Demostración: los cambios viven en memoria"}
+          <Link href="/reportes">Reportes</Link> · {enNube() ? admin : "Demostración: los cambios viven en memoria"}
         </p>
       </header>
 

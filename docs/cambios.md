@@ -1,5 +1,21 @@
 # Cambios
 
+## 1.6.0 · 2026-11-18 · Reportar un problema
+
+- `@fundamentum/relatio` (`web/relatio`): botón flotante y formulario «Reportar un problema» en React
+  (título opcional, qué pasa, cuándo, información adicional, captura tomada o adjunta y aviso por correo).
+  Usa `<dialog>` nativo, objetivos de 44 px y variables `--fr-*` que cada app mapea a sus tokens. Se
+  publica como `.tgz` en la release (`publicar-npm.yml`) y las apps lo fijan por esa URL.
+- `apps/relatio`: servicio en Cloud Run (`josecarloscorona-web`) que recibe el reporte, verifica el ID
+  token contra el proyecto de la app (el repo sale de la app verificada, nunca del navegador), suma
+  duplicados de los últimos 10 minutos como comentario, aplica cupos (5 por persona y 30 globales al día),
+  guarda la captura en un bucket privado y crea el issue con la GitHub App «Relatio Atrium» (solo Issues).
+  El texto del usuario va escapado: sin menciones, HTML ni «closes #N».
+- Atrium: vista `/reportes` y `/reportes/{id}` con la captura, servida tras IAP. Los issues enlazan ahí.
+- Por qué: no había forma de recoger lo que encuentran las personas de la beta. Las capturas no van a
+  GitHub para no exponer datos de pantalla.
+- Los cinco paquetes de Python suben a 1.6.0 sin cambios.
+
 ## Atrium · 2026-11-13 · Expensum en la lista de acceso
 
 - Atrium muestra Expensum (`expensum-mx`) junto a Iterum, Domi y Vocatio: modo, lista, solicitudes y

@@ -57,6 +57,7 @@ forma nativa y se convierte en costo por resultado en BigQuery.
 | 🚦 **Gate de evals en CI** | Corre `adk eval` y falla el build si una versión **duplica** los tokens, las llamadas al modelo o la latencia respecto a la línea base. |
 | 📨 **Eventos con idempotencia y presupuesto** | Esquemas base, un Despachador para Pub/Sub con deduplicación y topes por usuario y globales, y un registro en Firestore con reclamación atómica. |
 | 🎟️ **Acceso a la beta privada** | Una sola lista de quién entra a cada app, aplicada por un portero en Firebase Auth que falla cerrado, y **Atrium**, el panel privado (detrás de IAP) que la administra. |
+| 🐞 **Reportar un problema** | Un botón común en las apps que convierte lo que encuentra un usuario en un issue del repo correcto, firmado por la GitHub App **Relatio**. La captura queda privada y se ve en Atrium. |
 | 🏗️ **Infraestructura y CI como código** | Un módulo de Terraform crea la medición en cada proyecto. Los workflows reutilizables de GitHub Actions dan a las tres apps el mismo CI, con auditoría de dependencias. |
 
 ## Arquitectura
@@ -110,8 +111,10 @@ por separado.
 | [`fundamentum-evals`](python/fundamentum_evals) | Runner sobre `adk eval` y gate de eficiencia contra una línea base del repo de la app. | `evaluar`, `comparar`, `python -m fundamentum_evals` |
 | [`fundamentum-acceso`](python/fundamentum_acceso) | Lista de acceso común, decisión determinista por app y portero para las funciones bloqueantes de Firebase Auth. | `decidir`, `crear_portero`, `LectorFirestore`, `Permiso` |
 | [`apps/atrium`](apps/atrium) | Panel privado en Next.js y TypeScript, detrás de IAP: modo de cada app, solicitudes, lista de acceso, cuentas y bitácora. | Cloud Run |
+| [`web/relatio`](web/relatio) | `@fundamentum/relatio`: botón y formulario «Reportar un problema» en React, con captura de pantalla y estilos por variables. Se instala desde la release. | `ReportarProblema` |
+| [`apps/relatio`](apps/relatio) | Servicio que recibe los reportes, verifica la sesión de la app, aplica cupos y duplicados, guarda la captura en privado y crea el issue. | Cloud Run |
 | [`infra/modulos/medicion`](infra/modulos/medicion) | Terraform: dataset `agentes`, permisos, sink de resultados y 5 vistas de costo. | `module "medicion"` |
-| [`.github/workflows`](.github/workflows) | Workflows reutilizables: `python-uv`, `web-node`, `reglas-firebase` y `terraform`. | `uses: …@v1.5.0` |
+| [`.github/workflows`](.github/workflows) | Workflows reutilizables: `python-uv`, `web-node`, `reglas-firebase` y `terraform`. | `uses: …@v1.6.0` |
 
 ## Así se ve en una app
 
@@ -224,7 +227,9 @@ fundamentum/
 │  ├─ fundamentum_eventos/   esquemas, Despachador, reintentos y Firestore
 │  ├─ fundamentum_evals/     runner de adk eval y gate de eficiencia
 │  └─ fundamentum_acceso/    lista de acceso y portero de Firebase Auth
-├─ apps/atrium/              panel privado de acceso (Next.js, Cloud Run + IAP)
+├─ apps/atrium/              panel privado de acceso y reportes (Next.js, Cloud Run + IAP)
+├─ apps/relatio/             receptor de «Reportar un problema» (Node, Cloud Run)
+├─ web/relatio/              botón «Reportar un problema» (@fundamentum/relatio)
 ├─ infra/
 │  ├─ modulos/medicion/      Terraform y vistas SQL, con pruebas en DuckDB
 │  └─ proyecto/              proyecto de GCP del chasis
@@ -294,6 +299,7 @@ Vocatio y Domi lo adoptan antes de cualquier funcionalidad nueva.
   (1.2–1.4).
 - [x] **Acceso:** lista común, portero de Firebase Auth y Atrium (1.3).
 - [x] **CI compartido:** GitHub Actions, workflows reutilizables y Dependabot (1.5).
+- [x] **Reportar un problema:** botón común, servicio Relatio e issues por app (1.6).
 - [ ] **Design system único:** `@fundamentum/tokens` y `@fundamentum/ui`, sobre una base MiniMax
   con un tema por app.
 - [ ] **Uso en Atrium y tablero de negocio:** costo por resultado, aceptación y retención.

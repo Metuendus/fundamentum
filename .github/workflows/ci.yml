@@ -24,6 +24,8 @@ jobs:
     outputs:
       python: ${{ steps.filtro.outputs.python }}
       atrium: ${{ steps.filtro.outputs.atrium }}
+      relatio: ${{ steps.filtro.outputs.relatio }}
+      widget: ${{ steps.filtro.outputs.widget }}
       terraform: ${{ steps.filtro.outputs.terraform }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -48,6 +50,12 @@ jobs:
             atrium:
               - *ci
               - apps/atrium/**
+            relatio:
+              - *ci
+              - apps/relatio/**
+            widget:
+              - *ci
+              - web/relatio/**
             terraform:
               - *ci
               - infra/**
@@ -75,6 +83,27 @@ jobs:
         npm test
         npm run build
 
+  relatio:
+    needs: cambios
+    if: github.event_name == 'push' || needs.cambios.outputs.relatio == 'true'
+    uses: ./.github/workflows/web-node.yml
+    with:
+      directorio: apps/relatio
+      comando: |
+        npm run typecheck
+        npm test
+
+  widget:
+    needs: cambios
+    if: github.event_name == 'push' || needs.cambios.outputs.widget == 'true'
+    uses: ./.github/workflows/web-node.yml
+    with:
+      directorio: web/relatio
+      comando: |
+        npm run typecheck
+        npm test
+        npm pack --dry-run
+
   terraform:
     needs: cambios
     if: github.event_name == 'push' || needs.cambios.outputs.terraform == 'true'
@@ -84,7 +113,7 @@ jobs:
       fmt-recursivo: true
 
   ci-ok:
-    needs: [cambios, python, atrium, terraform]
+    needs: [cambios, python, atrium, relatio, widget, terraform]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 2

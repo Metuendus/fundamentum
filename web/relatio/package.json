@@ -1,0 +1,39 @@
+{
+  "name": "@fundamentum/relatio",
+  "version": "1.6.0",
+  "description": "Botón «Reportar un problema» de las apps: formulario, captura y envío a Relatio.",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./estilos.css": "./estilos.css"
+  },
+  "files": [
+    "dist",
+    "estilos.css"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test 'tests/*.test.mts'",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=19"
+  },
+  "dependencies": {
+    "modern-screenshot": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/react": "^19",
+    "react": "19.2.8",
+    "typescript": "^5"
+  }
+}

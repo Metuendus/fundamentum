@@ -1,0 +1,41 @@
+# Construye y despliega Relatio en el proyecto central (josecarloscorona-web). Lo dispara el trigger
+# `relatio-main` con cada push a main que toque apps/relatio/**; a mano, desde la raíz del repo:
+#   gcloud builds submit --project josecarloscorona-web --config apps/relatio/cloudbuild.yaml apps/relatio \
+#     --substitutions=_ATRIUM_URL=https://atrium-….run.app
+# Es público (lo llaman las apps desde el navegador) y verifica el ID token de Firebase en cada reporte.
+steps:
+  - id: imagen
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/relatio/relatio:${BUILD_ID}", "."]
+
+  - id: subir
+    name: gcr.io/cloud-builders/docker
+    args: ["push", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/relatio/relatio:${BUILD_ID}"]
+
+  - id: desplegar
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - relatio
+      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/relatio/relatio:${BUILD_ID}
+      - --region=${_REGION}
+      - --service-account=relatio@${PROJECT_ID}.iam.gserviceaccount.com
+      - --allow-unauthenticated
+      - --max-instances=2
+      - --memory=512Mi
+      - --set-secrets=RELATIO_GITHUB_APP_KEY=relatio-github-app-key:latest
+      - --update-env-vars=^#^RELATIO_GITHUB_APP_ID=${_GITHUB_APP_ID}#RELATIO_BUCKET=${PROJECT_ID}-relatio#RELATIO_ATRIUM_URL=${_ATRIUM_URL}#RELATIO_PROYECTO_CENTRAL=${PROJECT_ID}#RELATIO_ORIGENES=${_ORIGENES}
+
+substitutions:
+  _REGION: us-central1
+  _GITHUB_APP_ID: "5823639"
+  _ATRIUM_URL: ""
+  _ORIGENES: https://iterum.josecarloscorona.dev,https://domi.josecarloscorona.dev,https://vocatio.josecarloscorona.dev
+
+images:
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/relatio/relatio:${BUILD_ID}
+
+options:
+  logging: CLOUD_LOGGING_ONLY
