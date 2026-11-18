@@ -114,7 +114,7 @@ por separado.
 | [`web/relatio`](web/relatio) | `@fundamentum/relatio`: botón y formulario «Reportar un problema» en React, con captura de pantalla y estilos por variables. Se instala desde la release. | `ReportarProblema` |
 | [`apps/relatio`](apps/relatio) | Servicio que recibe los reportes, verifica la sesión de la app, aplica cupos y duplicados, guarda la captura en privado y crea el issue. | Cloud Run |
 | [`infra/modulos/medicion`](infra/modulos/medicion) | Terraform: dataset `agentes`, permisos, sink de resultados y 5 vistas de costo. | `module "medicion"` |
-| [`.github/workflows`](.github/workflows) | Workflows reutilizables: `python-uv`, `web-node`, `reglas-firebase` y `terraform`. | `uses: …@v1.6.0` |
+| [`.github/workflows`](.github/workflows) | Workflows reutilizables: `python-uv`, `web-node`, `reglas-firebase` y `terraform`. | `uses: …@v1.6.1` |
 
 ## Así se ve en una app
 

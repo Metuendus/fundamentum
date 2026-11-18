@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { aCaptura, tomarCaptura, type Captura } from "./captura.ts";
 import { LIMITES, limpiarUrl, validarCampos, type Campos, type Errores, type Reporte } from "./contrato.ts";
 import { enviarReporte } from "./enviar.ts";
@@ -20,7 +20,16 @@ export type ReportarProblemaProps = {
   oculto?: boolean;
   /** Rutas con segmentos secretos que no deben llegar al issue, p. ej. `"/invitar/:viaje/:token"`. */
   rutasPrivadas?: readonly string[];
+  /** `false` quita el botón flotante; la app abre el formulario con `abrirReporte()` desde su menú. */
+  boton?: boolean;
 };
+
+const EVENTO = "fr:reportar";
+
+/** Abre el formulario desde cualquier parte de la app (p. ej. un menú «Más»). */
+export function abrirReporte() {
+  window.dispatchEvent(new Event(EVENTO));
+}
 
 type Estado =
   | { fase: "editando"; mensaje?: string }
@@ -43,7 +52,7 @@ function contexto(version?: string): Reporte["contexto"] {
 }
 
 /** Botón flotante y formulario «Reportar un problema». Estilos en `@fundamentum/relatio/estilos.css`. */
-export function ReportarProblema({ app, relatioUrl, obtenerToken, correo, version, oculto, rutasPrivadas }: ReportarProblemaProps) {
+export function ReportarProblema({ app, relatioUrl, obtenerToken, correo, version, oculto, rutasPrivadas, boton = true }: ReportarProblemaProps) {
   const dialogo = useRef<HTMLDialogElement>(null);
   const archivo = useRef<HTMLInputElement>(null);
   const id = useId();
@@ -55,12 +64,19 @@ export function ReportarProblema({ app, relatioUrl, obtenerToken, correo, versio
   const [errorCaptura, setErrorCaptura] = useState("");
   const [estado, setEstado] = useState<Estado>({ fase: "editando" });
 
+  useEffect(() => {
+    if (oculto) return;
+    const alAbrir = () => {
+      setEstado((e) => (e.fase === "enviando" ? e : { fase: "editando" }));
+      if (!dialogo.current?.open) dialogo.current?.showModal();
+    };
+    window.addEventListener(EVENTO, alAbrir);
+    return () => window.removeEventListener(EVENTO, alAbrir);
+  }, [oculto]);
+
   if (oculto) return null;
 
-  const abrir = () => {
-    setEstado({ fase: "editando" });
-    dialogo.current?.showModal();
-  };
+  const abrir = () => abrirReporte();
 
   const cerrar = () => {
     dialogo.current?.close();
@@ -145,9 +161,11 @@ export function ReportarProblema({ app, relatioUrl, obtenerToken, correo, versio
 
   return (
     <div className="fr-raiz" data-fr-reporte="">
-      <button type="button" className="fr-flotante" onClick={abrir} aria-label="Reportar un problema" title="Reportar un problema">
-        <IconoBicho />
-      </button>
+      {boton ? (
+        <button type="button" className="fr-flotante" onClick={abrir} aria-label="Reportar un problema" title="Reportar un problema">
+          <IconoBicho />
+        </button>
+      ) : null}
 
       <dialog ref={dialogo} className="fr-dialogo" aria-labelledby={`${id}-titulo`} onClose={cerrar}>
         <div className="fr-encabezado">
@@ -199,7 +217,7 @@ export function ReportarProblema({ app, relatioUrl, obtenerToken, correo, versio
             <label className="fr-etiqueta" htmlFor={`${id}-cuando`}>
               ¿Cuándo ocurre?
             </label>
-            <input {...campo("cuando")} className="fr-campo" required placeholder="Ej: siempre, solo al guardar, la primera vez que inicio sesión" />
+            <input {...campo("cuando")} className="fr-campo" required placeholder="Ej: siempre, al guardar, al entrar" />
             {error("cuando")}
 
             <label className="fr-etiqueta" htmlFor={`${id}-adicional`}>

@@ -2,10 +2,13 @@
 # `relatio-main` con cada push a main que toque apps/relatio/**; a mano, desde la raíz del repo:
 #   gcloud builds submit --project josecarloscorona-web --config apps/relatio/cloudbuild.yaml apps/relatio \
 #     --substitutions=_ATRIUM_URL=https://atrium-….run.app
+# Si un despliegue nuevo pierde el acceso público: gcloud run services add-iam-policy-binding relatio
+#   --member allUsers --role roles/run.invoker (la cuenta del build no puede fijar IAM).
 # Es público (lo llaman las apps desde el navegador) y verifica el ID token de Firebase en cada reporte.
 steps:
   - id: imagen
     name: gcr.io/cloud-builders/docker
+    dir: ${_DIR}
     args: ["build", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/relatio/relatio:${BUILD_ID}", "."]
 
   - id: subir
@@ -30,6 +33,8 @@ steps:
 
 substitutions:
   _REGION: us-central1
+  # El trigger corre desde la raíz del repo y pone apps/relatio; a mano, la raíz ya es apps/relatio.
+  _DIR: "."
   _GITHUB_APP_ID: "5823639"
   _ATRIUM_URL: ""
   _ORIGENES: https://iterum.josecarloscorona.dev,https://domi.josecarloscorona.dev,https://vocatio.josecarloscorona.dev

@@ -9,7 +9,7 @@ que crea el issue en el repo de la app.
 Se fija por la release, como los paquetes de Python:
 
 ```json
-"@fundamentum/relatio": "https://github.com/Metuendus/fundamentum/releases/download/v1.6.0/fundamentum-relatio-1.6.0.tgz"
+"@fundamentum/relatio": "https://github.com/Metuendus/fundamentum/releases/download/v1.6.1/fundamentum-relatio-1.6.1.tgz"
 ```
 
 ## Usar
@@ -33,6 +33,8 @@ import "@fundamentum/relatio/estilos.css";
 - Sin sesión o en `/demo`, pasa `oculto`: Relatio rechaza reportes sin ID token.
 - La página se envía sin query ni fragmento, y `rutasPrivadas` tapa segmentos secretos de la ruta
   (tokens de invitación, enlaces compartidos).
+- Donde el botón flotante estorba (un chat, una barra inferior), pasa `boton={false}` en esa ruta y
+  abre el formulario con `abrirReporte()` desde un menú de la app.
 - «Tomar captura» dibuja la pantalla desde el DOM, sin pedir permiso. Los iframes de otros orígenes
   (mapas) pueden salir en blanco; para eso está «Adjuntar archivo». Máximo 5 MB.
 
@@ -46,7 +48,7 @@ Cada app mapea las variables en el bloque de extensiones de su `tokens.css`:
 | `--fr-acento`, `--fr-sobre-acento` | Botón flotante y botón principal |
 | `--fr-error`, `--fr-foco`, `--fr-velo` | Errores, anillo de foco y fondo del modal |
 | `--fr-radio`, `--fr-radio-control`, `--fr-fuente` | Forma y tipografía |
-| `--fr-abajo`, `--fr-derecha`, `--fr-z` | Posición del botón (p. ej. sobre una barra inferior) |
+| `--fr-abajo`, `--fr-derecha`, `--fr-izquierda`, `--fr-z` | Posición del botón (valores completos; para la izquierda, `--fr-derecha: auto`) |
 
 Sin mapeo usa `Canvas`/`CanvasText`, que siguen el modo oscuro del sistema.
 

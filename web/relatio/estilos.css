@@ -21,8 +21,9 @@
 
 .fr-flotante {
   position: fixed;
-  right: calc(var(--fr-derecha, 24px) + env(safe-area-inset-right));
-  bottom: calc(var(--fr-abajo, 24px) + env(safe-area-inset-bottom));
+  right: var(--fr-derecha, calc(24px + env(safe-area-inset-right)));
+  left: var(--fr-izquierda, auto);
+  bottom: var(--fr-abajo, calc(24px + env(safe-area-inset-bottom)));
   z-index: var(--fr-z, 900);
   display: grid;
   place-items: center;
