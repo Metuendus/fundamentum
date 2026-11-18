@@ -26,11 +26,13 @@ import "@fundamentum/relatio/estilos.css";
   correo={usuario?.email}
   version={process.env.NEXT_PUBLIC_VERSION}
   oculto={!usuario || enDemo}
+  rutasPrivadas={["/invitar/:viaje/:token"]}
 />
 ```
 
 - Sin sesión o en `/demo`, pasa `oculto`: Relatio rechaza reportes sin ID token.
-- La página se envía sin query ni fragmento (ahí viajan tokens de invitación).
+- La página se envía sin query ni fragmento, y `rutasPrivadas` tapa segmentos secretos de la ruta
+  (tokens de invitación, enlaces compartidos).
 - «Tomar captura» dibuja la pantalla desde el DOM, sin pedir permiso. Los iframes de otros orígenes
   (mapas) pueden salir en blanco; para eso está «Adjuntar archivo». Máximo 5 MB.
 

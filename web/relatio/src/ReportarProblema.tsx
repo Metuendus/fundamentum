@@ -18,6 +18,8 @@ export type ReportarProblemaProps = {
   version?: string;
   /** Oculta el botón, p. ej. en `/demo` o sin sesión. */
   oculto?: boolean;
+  /** Rutas con segmentos secretos que no deben llegar al issue, p. ej. `"/invitar/:viaje/:token"`. */
+  rutasPrivadas?: readonly string[];
 };
 
 type Estado =
@@ -41,7 +43,7 @@ function contexto(version?: string): Reporte["contexto"] {
 }
 
 /** Botón flotante y formulario «Reportar un problema». Estilos en `@fundamentum/relatio/estilos.css`. */
-export function ReportarProblema({ app, relatioUrl, obtenerToken, correo, version, oculto }: ReportarProblemaProps) {
+export function ReportarProblema({ app, relatioUrl, obtenerToken, correo, version, oculto, rutasPrivadas }: ReportarProblemaProps) {
   const dialogo = useRef<HTMLDialogElement>(null);
   const archivo = useRef<HTMLInputElement>(null);
   const id = useId();
@@ -117,7 +119,7 @@ export function ReportarProblema({ app, relatioUrl, obtenerToken, correo, versio
       cuando: campos.cuando.trim(),
       ...(campos.adicional.trim() ? { adicional: campos.adicional.trim() } : {}),
       avisar,
-      pagina: limpiarUrl(window.location.href),
+      pagina: limpiarUrl(window.location.href, rutasPrivadas),
       contexto: contexto(version),
       ...(captura ? { captura: { tipo: captura.tipo, datos: captura.datos } } : {}),
     });

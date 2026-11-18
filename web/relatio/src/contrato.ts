@@ -51,15 +51,24 @@ export function validarCampos(c: Campos): Errores {
 
 /**
  * La página sin query ni fragmento: ahí viajan tokens de invitación, códigos de OAuth y filtros
- * que no ayudan a diagnosticar y no deben quedar en un issue.
+ * que no ayudan a diagnosticar y no deben quedar en un issue. `rutasPrivadas` tapa segmentos
+ * secretos de la ruta: con `"/invitar/:viaje/:token"`, `/invitar/abc/XYZ` queda `/invitar/[viaje]/[token]`.
  */
-export function limpiarUrl(url: string): string {
+export function limpiarUrl(url: string, rutasPrivadas: readonly string[] = []): string {
+  let u: URL;
   try {
-    const u = new URL(url);
-    return `${u.origin}${u.pathname}`.slice(0, LIMITES.pagina);
+    u = new URL(url);
   } catch {
     return "";
   }
+  const partes = u.pathname.split("/");
+  for (const plantilla of rutasPrivadas) {
+    const p = plantilla.split("/");
+    if (p.length !== partes.length || !p.every((seg, i) => seg.startsWith(":") || seg === partes[i])) continue;
+    u.pathname = p.map((seg, i) => (seg.startsWith(":") ? `[${seg.slice(1)}]` : partes[i])).join("/");
+    break;
+  }
+  return `${u.origin}${u.pathname}`.slice(0, LIMITES.pagina);
 }
 
 /** Tamaño en bytes de un base64 ya decodificado, sin decodificarlo. */

@@ -21,6 +21,13 @@ test("la página no lleva query ni fragmento (tokens de invitación, códigos)",
   assert.equal(limpiarUrl("no es url"), "");
 });
 
+test("tapa los segmentos secretos de las rutas privadas", () => {
+  const rutas = ["/invitar/:viaje/:token", "/v/:enlace"];
+  assert.equal(limpiarUrl("https://i.dev/invitar/v1/AbC_123?x=1", rutas), "https://i.dev/invitar/[viaje]/[token]");
+  assert.equal(limpiarUrl("https://i.dev/v/xyz", rutas), "https://i.dev/v/[enlace]");
+  assert.equal(limpiarUrl("https://i.dev/viaje/v1", rutas), "https://i.dev/viaje/v1");
+});
+
 test("calcula los bytes de un base64 sin decodificarlo", () => {
   assert.equal(bytesDeBase64(Buffer.from("hola").toString("base64")), 4);
   assert.equal(bytesDeBase64(Buffer.from("hola!").toString("base64")), 5);
