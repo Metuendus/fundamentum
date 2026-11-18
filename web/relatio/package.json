@@ -1,6 +1,6 @@
 {
   "name": "@fundamentum/relatio",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Botón «Reportar un problema» de las apps: formulario, captura y envío a Relatio.",
   "license": "GPL-3.0-only",
   "type": "module",

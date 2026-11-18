@@ -1,5 +1,14 @@
 # Cambios
 
+## 1.6.1 · 2026-11-18 · Relatio sin estorbar
+
+- `@fundamentum/relatio`: `boton={false}` quita el botón flotante y `abrirReporte()` abre el formulario
+  desde un menú de la app. Sirve para las vistas con chat o barra inferior (en Iterum el botón tapaba
+  el envío del Concierge en móvil). `--fr-izquierda` permite ponerlo a la izquierda.
+- `apps/relatio/cloudbuild.yaml` construye desde la raíz del repo (`_DIR`), como lo corre el trigger
+  `relatio-main`.
+- Los paquetes de Python suben a 1.6.1 sin cambios.
+
 ## 1.6.0 · 2026-11-18 · Reportar un problema
 
 - `@fundamentum/relatio` (`web/relatio`): botón flotante y formulario «Reportar un problema» en React
