@@ -14,7 +14,9 @@
 - Atrium: vista `/reportes` y `/reportes/{id}` con la captura, servida tras IAP. Los issues enlazan ahí.
 - Por qué: no había forma de recoger lo que encuentran las personas de la beta. Las capturas no van a
   GitHub para no exponer datos de pantalla.
-- Los cinco paquetes de Python suben a 1.6.0 sin cambios.
+- Lock: `google-adk` 2.14.1 y `opentelemetry-api` 1.45.2, que cierran CVE-2026-126360 y CVE-2026-114603; se
+  quita esta última de las vulnerabilidades aceptadas en `ci.yml`.
+- Los cinco paquetes de Python suben a 1.6.0 sin otros cambios.
 
 ## Atrium · 2026-11-13 · Expensum en la lista de acceso
 
