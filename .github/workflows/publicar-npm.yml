@@ -1,0 +1,46 @@
+# Publica @fundamentum/relatio como archivo de la release vX.Y.Z. Las apps lo fijan por esa URL,
+# como fijan los paquetes de Python por etiqueta:
+#   "@fundamentum/relatio": "https://github.com/Metuendus/fundamentum/releases/download/vX.Y.Z/fundamentum-relatio-X.Y.Z.tgz"
+# La versión de web/relatio/package.json debe coincidir con la etiqueta; si no, no se publica nada.
+name: publicar-npm
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  widget:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: web/relatio
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/relatio/package-lock.json
+      - name: Versión igual a la etiqueta
+        env:
+          ETIQUETA: ${{ github.event.release.tag_name }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          test "v$version" = "$ETIQUETA" || { echo "package.json dice $version y la etiqueta $ETIQUETA"; exit 1; }
+      - run: npm ci
+      - run: npm run typecheck && npm test
+      - name: Empaquetar y subir a la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ETIQUETA: ${{ github.event.release.tag_name }}
+        run: |
+          archivo=$(npm pack --silent)
+          gh release upload "$ETIQUETA" "$archivo" --repo "$GITHUB_REPOSITORY" --clobber

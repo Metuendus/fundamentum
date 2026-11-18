@@ -1,0 +1,24 @@
+{
+  "name": "relatio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Recibe los reportes del botón «Reportar un problema» y crea el issue en el repo de cada app.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "start": "node src/servidor.ts",
+    "dev": "node --watch src/servidor.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test 'tests/*.test.mts'"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.17.0",
+    "firebase-admin": "^14.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "typescript": "^5"
+  }
+}

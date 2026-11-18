@@ -15,6 +15,9 @@ más adelante cuánto se usa cada una. Escribe la lista que lee el portero de `f
 - **Cuentas por app:** las cuentas de Firebase Auth de cada proyecto, con último acceso y si están
   dentro o fuera de la lista.
 - Cada cambio deja una fila en `bitacora` con quién lo hizo.
+- **Reportes** (`/reportes`): lo que llega del botón «Reportar un problema» vía
+  [Relatio](../relatio), con enlace al issue y la captura privada (`/reportes/{id}`). Las capturas
+  se leen del bucket `josecarloscorona-web-relatio` (`ATRIUM_BUCKET_RELATIO` para cambiarlo).
 
 ## Datos
 
@@ -34,6 +37,7 @@ Permisos de la cuenta `atrium@josecarloscorona-web`:
 | --- | --- | --- |
 | josecarloscorona-web | `roles/datastore.user` | Leer y escribir la lista |
 | travel-planner-509322, domi-mx, vocatio-mx, expensum-mx | `roles/firebaseauth.admin` | Listar cuentas y revocar sesiones |
+| bucket `josecarloscorona-web-relatio` | `roles/storage.objectViewer` | Mostrar capturas de reportes |
 
 ## Desarrollo
 
