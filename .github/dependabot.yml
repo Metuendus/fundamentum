@@ -1,4 +1,4 @@
-# Actualizaciones semanales. Las menores y parches de cada ecosistema llegan juntas en un solo PR.
+# Actualizaciones mensuales. Las menores y parches de cada ecosistema llegan juntas en un solo PR.
 version: 2
 updates:
   - package-ecosystem: uv
