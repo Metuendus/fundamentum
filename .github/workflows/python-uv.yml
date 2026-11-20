@@ -31,6 +31,25 @@ on:
         description: IDs de vulnerabilidades aceptadas, separados por espacio. Cada una con su razón en el ci.yml que la pasa.
         type: string
         default: ""
+      terraform:
+        description: >-
+          Módulos de Terraform a validar en este mismo job (fmt -check, init -backend=false y validate),
+          separados por espacio. Vacío no corre Terraform. Juntarlo aquí ahorra el minuto mínimo que cobra
+          cada job aparte.
+        type: string
+        default: ""
+      terraform-version:
+        type: string
+        default: "1.9.8"
+      node-comando:
+        description: >-
+          Comandos de Node que corren en este mismo job después de Python (por ejemplo `npm run schemas:check`),
+          con `npm ci` en la raíz del repo antes. Vacío no instala Node.
+        type: string
+        default: ""
+      node-version:
+        type: string
+        default: "22"
 
 permissions:
   contents: read
@@ -65,3 +84,33 @@ jobs:
           args=()
           for id in $IGNORAR; do args+=(--ignore-vuln "$id"); done
           uvx pip-audit --disable-pip --no-deps --progress-spinner off "${args[@]}" -r "$RUNNER_TEMP/requisitos.txt"
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        if: inputs.terraform != ''
+        with:
+          terraform_version: ${{ inputs.terraform-version }}
+          terraform_wrapper: false
+      - name: Terraform
+        if: inputs.terraform != ''
+        working-directory: .
+        env:
+          DIRECTORIOS: ${{ inputs.terraform }}
+        run: |
+          for dir in $DIRECTORIOS; do
+            echo "::group::$dir"
+            terraform -chdir="$dir" fmt -check
+            terraform -chdir="$dir" init -backend=false -input=false
+            terraform -chdir="$dir" validate
+            echo "::endgroup::"
+          done
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: inputs.node-comando != ''
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Node
+        if: inputs.node-comando != ''
+        working-directory: .
+        run: |
+          npm ci
+          ${{ inputs.node-comando }}
