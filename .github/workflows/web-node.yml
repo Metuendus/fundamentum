@@ -21,6 +21,12 @@ on:
         description: Falla con vulnerabilidades altas o críticas en dependencias de producción.
         type: boolean
         default: true
+      playwright:
+        description: >-
+          Instala Chromium de Playwright antes de verificar, con los navegadores en caché por versión del lock.
+          Sirve para correr el e2e en este mismo job en vez de uno aparte.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -43,6 +49,15 @@ jobs:
           cache-dependency-path: ${{ inputs.directorio }}/package-lock.json
       - name: Instalar
         run: npm ci
+      - name: Caché de Playwright
+        if: inputs.playwright
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles(format('{0}/package-lock.json', inputs.directorio)) }}
+      - name: Navegador de Playwright
+        if: inputs.playwright
+        run: npx playwright install --with-deps chromium
       - name: Verificar
         run: ${{ inputs.comando }}
       - name: Auditar dependencias

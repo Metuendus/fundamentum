@@ -9,7 +9,7 @@ que crea el issue en el repo de la app.
 Se fija por la release, como los paquetes de Python:
 
 ```json
-"@fundamentum/relatio": "https://github.com/Metuendus/fundamentum/releases/download/v1.6.1/fundamentum-relatio-1.6.1.tgz"
+"@fundamentum/relatio": "https://github.com/Metuendus/fundamentum/releases/download/v1.7.0/fundamentum-relatio-1.7.0.tgz"
 ```
 
 ## Usar

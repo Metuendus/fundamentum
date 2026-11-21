@@ -1,5 +1,19 @@
 # Cambios
 
+## 1.7.0 · 2026-11-20 · CI con menos minutos
+
+- `python-uv.yml`: entradas `terraform` (módulos a validar con `fmt -check`, `init -backend=false` y
+  `validate`) y `node-comando` (con `npm ci` en la raíz antes, para `npm run schemas:check`). Corren en el
+  mismo job que Python.
+- `web-node.yml`: entrada `playwright` que instala Chromium con los navegadores en caché por versión del
+  lock, para correr el e2e en el job de la web.
+- Plantilla `plantillas/github/ci.yml` y `docs/ci.md`: el CI de las apps corre solo en PR, con menos jobs, y
+  Dependabot pasa a mensual.
+- Por qué: la cuenta llegó a 1,801 de 2,000 minutos de Actions el 19 de noviembre. Más de la mitad se iba en
+  repetir el CI completo al hacer merge y GitHub cobra cada job redondeado al minuto (`cambios`, `ci-ok`,
+  Terraform y esquemas duran segundos y cobraban un minuto cada uno).
+- Los paquetes de Python y `@fundamentum/relatio` suben a 1.7.0 sin otros cambios.
+
 ## 1.6.1 · 2026-11-18 · Relatio sin estorbar
 
 - `@fundamentum/relatio`: `boton={false}` quita el botón flotante y `abrirReporte()` abre el formulario

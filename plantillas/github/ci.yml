@@ -1,16 +1,16 @@
 # Plantilla del CI de una app (copiar a .github/workflows/ci.yml y ajustar los <…>).
 # Llama a los workflows reutilizables del chasis, fijados por etiqueta. Corre sin credenciales de nube.
 # El único check obligatorio es `ci-ok`. Los despliegues los hace Cloud Build al hacer merge a main.
+# Solo corre en PR: el merge a main ya pasó por aquí y repetirlo duplicaba los minutos (docs/ci.md).
+# Cada job cobra al menos un minuto: lo chico (Terraform, esquemas) va dentro del job de Python.
 name: ci
 
 on:
   pull_request:
-  push:
-    branches: [<main o master>]
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -26,15 +26,10 @@ jobs:
       python: ${{ steps.filtro.outputs.python }}
       web: ${{ steps.filtro.outputs.web }}
       reglas: ${{ steps.filtro.outputs.reglas }}
-      terraform: ${{ steps.filtro.outputs.terraform }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # En un push, paths-filter compara contra el commit anterior y sin credenciales no puede bajarlo:
-          # con el historial completo ya está aquí. En los PR usa la API y basta con un commit. Va entre comillas:
-          # un 0 numérico es falso en las expresiones y el `|| '1'` lo tapaba.
-          fetch-depth: ${{ github.event_name == 'push' && '0' || '1' }}
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filtro
         with:
@@ -44,6 +39,7 @@ jobs:
             python:
               - *ci
               - <agents/**>
+              - infra/**
               - pyproject.toml
               - uv.lock
             web:
@@ -53,21 +49,19 @@ jobs:
             reglas:
               - *ci
               - <firebase/**>
-            terraform:
-              - *ci
-              - infra/**
 
   python:
     needs: cambios
-    if: github.event_name == 'push' || needs.cambios.outputs.python == 'true'
-    uses: Metuendus/fundamentum/.github/workflows/python-uv.yml@v1.5.0
+    if: needs.cambios.outputs.python == 'true'
+    uses: Metuendus/fundamentum/.github/workflows/python-uv.yml@v1.7.0
     with:
       python-version: "<3.12>"
+      terraform: infra
 
   web:
     needs: cambios
-    if: github.event_name == 'push' || needs.cambios.outputs.web == 'true'
-    uses: Metuendus/fundamentum/.github/workflows/web-node.yml@v1.5.0
+    if: needs.cambios.outputs.web == 'true'
+    uses: Metuendus/fundamentum/.github/workflows/web-node.yml@v1.7.0
     with:
       comando: |
         npm run typecheck
@@ -77,22 +71,15 @@ jobs:
 
   reglas:
     needs: cambios
-    if: github.event_name == 'push' || needs.cambios.outputs.reglas == 'true'
-    uses: Metuendus/fundamentum/.github/workflows/reglas-firebase.yml@v1.5.0
+    if: needs.cambios.outputs.reglas == 'true'
+    uses: Metuendus/fundamentum/.github/workflows/reglas-firebase.yml@v1.7.0
     with:
       comando: |
         npm ci
         npm run test:rules
 
-  terraform:
-    needs: cambios
-    if: github.event_name == 'push' || needs.cambios.outputs.terraform == 'true'
-    uses: Metuendus/fundamentum/.github/workflows/terraform.yml@v1.5.0
-    with:
-      directorios: infra
-
   ci-ok:
-    needs: [cambios, python, web, reglas, terraform]
+    needs: [cambios, python, web, reglas]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 2
